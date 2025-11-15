@@ -5,9 +5,9 @@ namespace ChanSentry.Common.Models;
 public class ThreadPost
 {
     public int no { get; set; }
-    public string filename { get; set; }
-    public string ext { get; set; }
-    public string tim { get; set; }
+    public string filename { get; set; } = string.Empty;
+    public string ext { get; set; } = string.Empty;
+    public string tim { get; set; } = string.Empty;
 
     public string GetFullUrl(string boardCode) => $"https://i.4cdn.org/{boardCode}/{tim}{ext}";
 }
