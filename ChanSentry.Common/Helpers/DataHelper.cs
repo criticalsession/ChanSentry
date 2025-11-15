@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
-
-namespace ChanSentry.Common;
+namespace ChanSentry.Common.Helpers;
 
 public class DataHelper
 {
