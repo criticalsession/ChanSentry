@@ -1,9 +1,11 @@
 using System;
 using System.Text.Json;
+using ChanSentry.Common;
+using Microsoft.Extensions.Hosting.Internal;
 
 namespace ChanSentry.Watcher.Services;
 
-public class ThreadFetchService(IHttpClientFactory httpClientFactory)
+public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper dataHelper)
 {
     public async Task Get()
     {
@@ -23,5 +25,18 @@ public class ThreadFetchService(IHttpClientFactory httpClientFactory)
 
         thread.boardCode = "wg";
         thread.lastFetched = DateTime.UtcNow;
+
+        var cdnHttpClient = httpClientFactory.CreateClient("4chancdn");
+        foreach (var url in dataHelper.GetFiles(thread))
+        {
+            var fileResponse = await cdnHttpClient.GetAsync(url);
+            if (fileResponse.IsSuccessStatusCode)
+            {
+                using (FileStream fs = new FileStream($"Downloads/{Path.GetFileName(url)}", FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await fileResponse.Content.CopyToAsync(fs);
+                }
+            }
+        }
     }
 }
