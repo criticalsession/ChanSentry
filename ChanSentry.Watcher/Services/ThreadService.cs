@@ -1,10 +1,11 @@
 using System;
+using ChanSentry.Common.Helpers;
 using Microsoft.Extensions.Hosting;
 using Spectre.Console;
 
 namespace ChanSentry.Watcher.Services;
 
-public class ThreadService(ThreadFetchService threadFetchService) : BackgroundService
+public class ThreadService(ThreadFetchService threadFetchService, LogHelper logHelper) : BackgroundService
 {
     Dictionary<long, string> threadsToWatch = new()
     {
@@ -14,8 +15,7 @@ public class ThreadService(ThreadFetchService threadFetchService) : BackgroundSe
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        // TODO: create logging helper
-        AnsiConsole.MarkupLine("[bold green]Starting ThreadService...[/]");
+        logHelper.LogInfo("Starting Watcher...");
 
         var runTask = Task.Run(async () =>
         {
@@ -29,7 +29,7 @@ public class ThreadService(ThreadFetchService threadFetchService) : BackgroundSe
                     }
                     catch (Exception ex)
                     {
-                        AnsiConsole.MarkupLine($"[bold red]Error fetching thread {thread.Key}: {ex.Message}[/]");
+                        logHelper.LogError($"Error fetching thread {thread.Key}: {ex.Message}");
                         // TODO: remove thread from watch list
                     }
 
@@ -38,7 +38,7 @@ public class ThreadService(ThreadFetchService threadFetchService) : BackgroundSe
             }
         }, cancellationToken);
 
-        AnsiConsole.MarkupLine("[bold yellow]ThreadService is running.[/]");
+        logHelper.LogSuccess("Watcher started.");
         await runTask;
     }
 }

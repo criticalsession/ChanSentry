@@ -4,17 +4,18 @@ using Spectre.Console;
 
 namespace ChanSentry.Watcher.Services;
 
-public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper dataHelper, FileHelper fileHelper)
+public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper dataHelper, FileHelper fileHelper, LogHelper logHelper)
 {
     public async Task Get(string boardCode, long threadId)
     {
         var shortName = $"{boardCode}/{threadId}";
-        AnsiConsole.MarkupLine($"[cyan]Checking thread '{shortName}'[/]");
+
+        logHelper.LogInfo($"Checking thread '{shortName}'");
 
         var thread = await GetThreadAsync(boardCode, threadId);
         if (thread == null || thread.posts.Count == 0)
         {
-            AnsiConsole.MarkupLine("[yellow]No posts found in thread.[/]");
+            logHelper.LogInfo("No posts found in thread.");
             return;
         }
 
@@ -27,11 +28,11 @@ public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper
         var urls = dataHelper.GetFiles(thread).ToList();
         if (!urls.Any())
         {
-            AnsiConsole.MarkupLine("[yellow]No new files to download.[/]");
+            logHelper.LogInfo("No new files to download.");
             return;
         }
 
-        AnsiConsole.MarkupLine($"[cyan]Downloading {urls.Count} new files from {shortName}[/]");
+        logHelper.LogInfo($"Downloading {urls.Count} new files from {shortName}");
 
         var cdnHttpClient = httpClientFactory.CreateClient("4chancdn");
 
@@ -55,7 +56,7 @@ public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper
                 }
                 catch (Exception ex)
                 {
-                    AnsiConsole.MarkupLine($"[red]Failed to download '{u}': {ex.Message}[/]");
+                    logHelper.LogError($"Failed to download '{u}': {ex.Message}");
                 }
                 finally
                 {
@@ -70,7 +71,7 @@ public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper
         }
         finally
         {
-            AnsiConsole.MarkupLine($"[green]All new files downloaded from '{shortName}'[/]");
+            logHelper.LogSuccess($"All new files downloaded from '{shortName}'");
         }
     }
 
