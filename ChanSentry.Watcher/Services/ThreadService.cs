@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Extensions.Hosting;
+using Spectre.Console;
 
 namespace ChanSentry.Watcher.Services;
 
@@ -11,29 +12,33 @@ public class ThreadService(ThreadFetchService threadFetchService) : BackgroundSe
         { 8116493, "wg" }
     };
 
-    protected override Task ExecuteAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine("Starting ThreadService...");
-        foreach (var thread in threadsToWatch)
+        // TODO: create logging helper
+        AnsiConsole.MarkupLine("[bold green]Starting ThreadService...[/]");
+
+        var runTask = Task.Run(async () =>
         {
-            _ = Task.Run(async () =>
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (!cancellationToken.IsCancellationRequested)
+                foreach (var thread in threadsToWatch)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    try
                     {
-                        break;
+                        await threadFetchService.Get(thread.Value, thread.Key);
+                    }
+                    catch (Exception ex)
+                    {
+                        AnsiConsole.MarkupLine($"[bold red]Error fetching thread {thread.Key}: {ex.Message}[/]");
+                        // TODO: remove thread from watch list
                     }
 
-                    await threadFetchService.Get(thread.Value, thread.Key);
-                    await Task.Delay(5000, cancellationToken);
+                    await Task.Delay(2000, cancellationToken);
                 }
-            }, cancellationToken);
+            }
+        }, cancellationToken);
 
-            Task.Delay(2000, cancellationToken);
-        }
-
-        Console.WriteLine("ThreadService is running.");
-        return Task.CompletedTask;
+        AnsiConsole.MarkupLine("[bold yellow]ThreadService is running.[/]");
+        await runTask;
     }
 }

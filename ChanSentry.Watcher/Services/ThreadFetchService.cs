@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ChanSentry.Common.Helpers;
+using Spectre.Console;
 
 namespace ChanSentry.Watcher.Services;
 
@@ -7,10 +8,13 @@ public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper
 {
     public async Task Get(string boardCode, long threadId)
     {
+        var shortName = $"{boardCode}/{threadId}";
+        AnsiConsole.MarkupLine($"[cyan]Checking thread '{shortName}'[/]");
+
         var thread = await GetThreadAsync(boardCode, threadId);
         if (thread == null || thread.posts.Count == 0)
         {
-            Console.WriteLine("No posts found in thread.");
+            AnsiConsole.MarkupLine("[yellow]No posts found in thread.[/]");
             return;
         }
 
@@ -20,12 +24,53 @@ public class ThreadFetchService(IHttpClientFactory httpClientFactory, DataHelper
 
         fileHelper.CheckAndBuildDirectories(boardCode, threadId);
 
-        var cdnHttpClient = httpClientFactory.CreateClient("4chancdn");
-        foreach (var url in dataHelper.GetFiles(thread))
+        var urls = dataHelper.GetFiles(thread).ToList();
+        if (!urls.Any())
         {
-            Console.WriteLine($"Downloading file: {url} [{boardCode}/{threadId}]");
-            var fileResponse = await cdnHttpClient.GetAsync(url);
-            await fileHelper.DownloadAsync(fileResponse, boardCode, threadId, url);
+            AnsiConsole.MarkupLine("[yellow]No new files to download.[/]");
+            return;
+        }
+
+        AnsiConsole.MarkupLine($"[cyan]Downloading {urls.Count} new files from {shortName}[/]");
+
+        var cdnHttpClient = httpClientFactory.CreateClient("4chancdn");
+
+        // TODO: move to settings
+        const int maxConcurrency = 4;
+        using var semaphore = new SemaphoreSlim(maxConcurrency);
+
+        var downloadTasks = new List<Task>();
+
+        foreach (var url in urls)
+        {
+            var u = url;
+            await semaphore.WaitAsync();
+
+            downloadTasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var fileResponse = await cdnHttpClient.GetAsync(u);
+                    await fileHelper.DownloadAsync(fileResponse, boardCode, threadId, u);
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[red]Failed to download '{u}': {ex.Message}[/]");
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
+        }
+
+        try
+        {
+            await Task.WhenAll(downloadTasks);
+        }
+        finally
+        {
+            AnsiConsole.MarkupLine($"[green]All new files downloaded from '{shortName}'[/]");
         }
     }
 

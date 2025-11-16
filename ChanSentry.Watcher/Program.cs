@@ -25,10 +25,6 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<ThreadFetchService>();
         services.AddHostedService<ThreadService>();
     })
-    .ConfigureLogging(logging =>
-    {
-        logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
-    })
     .Build();
 
 await host.RunAsync();
