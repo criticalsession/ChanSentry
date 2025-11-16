@@ -21,6 +21,7 @@ var host = Host.CreateDefaultBuilder(args)
 
         services.AddSingleton<DataHelper>();
         services.AddSingleton<FileHelper>();
+        services.AddSingleton<LogHelper>();
 
         services.AddScoped<ThreadFetchService>();
         services.AddHostedService<ThreadService>();

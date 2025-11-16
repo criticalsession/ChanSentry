@@ -1,24 +1,24 @@
 namespace ChanSentry.Common.Helpers;
 
-public class FileHelper
+public class FileHelper(LogHelper logHelper)
 {
     public void CheckAndBuildDirectories(string boardCode, long threadId)
     {
         if (!Directory.Exists("Downloads"))
         {
-            Console.WriteLine("Creating Downloads directory...");
+            logHelper.LogInfo("Creating Downloads directory...");
             Directory.CreateDirectory("Downloads");
         }
 
         if (!Directory.Exists("Downloads/" + boardCode))
         {
-            Console.WriteLine($"Creating Downloads/{boardCode} directory...");
+            logHelper.LogInfo($"Creating Downloads/{boardCode} directory...");
             Directory.CreateDirectory("Downloads/" + boardCode);
         }
 
         if (!Directory.Exists($"Downloads/{boardCode}/{threadId}"))
         {
-            Console.WriteLine($"Creating Downloads/{boardCode}/{threadId} directory...");
+            logHelper.LogInfo($"Creating Downloads/{boardCode}/{threadId} directory...");
             Directory.CreateDirectory($"Downloads/{boardCode}/{threadId}");
         }
     }
