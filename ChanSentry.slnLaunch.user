@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "ChanSentry.Downloader\\ChanSentry.Downloader.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ChanSentry.Manager\\ChanSentry.Manager.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
