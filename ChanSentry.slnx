@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ChanSentry.Common/ChanSentry.Common.csproj" />
+  <Project Path="ChanSentry.Downloader/ChanSentry.Downloader.csproj" />
+  <Project Path="ChanSentry.Manager/ChanSentry.Manager.csproj" />
+  <Project Path="ChanSentry.Tests/ChanSentry.Tests.csproj" />
+</Solution>
