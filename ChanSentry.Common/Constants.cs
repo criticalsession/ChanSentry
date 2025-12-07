@@ -47,4 +47,15 @@ public static class Constants
         /// </summary>
         public const string FileUrlTemplate = $"{BaseFileUrl}/{{0}}/{{1}}{{2}}";
     }
+
+    public static class Menus
+    {
+        public const string Main = "MAIN";
+        public const string ManageThreads = "MANAGE";
+        public const string Downloader = "DOWNLOAD";
+        public const string AddThread = "ADD";
+        public const string ListDeleteThreads = "LIST";
+        public const string Exit = "EXIT";
+        public const string Back = "BACK";
+    }
 }

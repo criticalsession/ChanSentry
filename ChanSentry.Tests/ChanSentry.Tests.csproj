@@ -18,8 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ChanSentry.Common\ChanSentry.Common.csproj" />
-    <ProjectReference Include="..\ChanSentry.Downloader\ChanSentry.Downloader.csproj" />
-    <ProjectReference Include="..\ChanSentry.Manager\ChanSentry.Manager.csproj" />
+    <ProjectReference Include="..\ChanSentry.Cli\ChanSentry.CLI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
