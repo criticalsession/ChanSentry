@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ChanSentry.Common.Models;
 
-public class CatalogThreads
+public class CatalogThreads : IApiModel
 {
     [JsonPropertyName("page")]
     public int Page { get; set; }
@@ -14,7 +15,7 @@ public class CatalogThreads
     public List<CatalogThread> ThreadList { get; set; } = new();
 }
 
-public class CatalogThread
+public class CatalogThread : IApiModel
 {
     [JsonPropertyName("no")]
     public int ThreadId { get; set; }
