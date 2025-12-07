@@ -13,10 +13,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetSingleBoardJson();
-            var board = new Board();
 
             // Act
-            var result = board.Deserialize(json);
+            var result = JsonHelper.Deserialize<Board>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -34,10 +33,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetMultipleBoardsJson();
-            var boards = new Boards();
 
             // Act
-            var result = boards.Deserialize(json);
+            var result = JsonHelper.Deserialize<Boards>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -56,10 +54,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetThreadJsonWithMultiplePosts();
-            var thread = new ChanSentry.Common.Models.Thread();
 
             // Act
-            var result = thread.Deserialize(json);
+            var result = JsonHelper.Deserialize<ChanSentry.Common.Models.Thread>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -78,10 +75,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetPostJsonWithAllFields();
-            var post = new Post();
 
             // Act
-            var result = post.Deserialize(json);
+            var result = JsonHelper.Deserialize<Post>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -99,10 +95,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetPostJsonWithNullableFields();
-            var post = new Post();
 
             // Act
-            var result = post.Deserialize(json);
+            var result = JsonHelper.Deserialize<Post>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -120,10 +115,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetSingleCatalogThreadJson();
-            var catalogThread = new CatalogThread();
 
             // Act
-            var result = catalogThread.Deserialize(json);
+            var result = JsonHelper.Deserialize<CatalogThread>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -142,10 +136,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetMultipleCatalogThreadsJson();
-            var catalogThreads = new CatalogThreads();
 
             // Act
-            var result = catalogThreads.Deserialize(json);
+            var result = JsonHelper.Deserialize<CatalogThreads>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -165,10 +158,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetEmptyString();
-            var board = new Board();
 
             // Act & Assert
-            Assert.Throws<JsonException>(() => board.Deserialize(json));
+            Assert.Throws<JsonException>(() => JsonHelper.Deserialize<Board>(json));
         }
 
         [Test]
@@ -176,10 +168,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetInvalidJson();
-            var board = new Board();
 
             // Act & Assert
-            Assert.Throws<JsonException>(() => board.Deserialize(json));
+            Assert.Throws<JsonException>(() => JsonHelper.Deserialize<Board>(json));
         }
 
         [Test]
@@ -187,10 +178,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             string? json = TestDataHelper.GetNullJson();
-            var board = new Board();
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => board.Deserialize(json!));
+            Assert.Throws<ArgumentNullException>(() => JsonHelper.Deserialize<Board>(json!));
         }
 
         [Test]
@@ -198,10 +188,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetEmptyJson();
-            var board = new Board();
 
             // Act
-            var result = board.Deserialize(json);
+            var result = JsonHelper.Deserialize<Board>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -219,10 +208,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetPartialBoardJson();
-            var board = new Board();
 
             // Act
-            var result = board.Deserialize(json);
+            var result = JsonHelper.Deserialize<Board>(json);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -240,10 +228,9 @@ namespace ChanSentry.Tests.Common
         {
             // Arrange
             var json = TestDataHelper.GetBoardJsonWithExtraFields();
-            var board = new Board();
 
             // Act
-            var result = board.Deserialize(json);
+            var result = JsonHelper.Deserialize<Board>(json);
 
             // Assert - Should not throw and should deserialize known fields correctly
             Assert.That(result, Is.Not.Null);
