@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
-using static System.Net.WebRequestMethods;
 
 namespace ChanSentry.Common.Models;
 
