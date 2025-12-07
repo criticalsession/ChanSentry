@@ -5,13 +5,13 @@ using System.Text.Json.Serialization;
 
 namespace ChanSentry.Common.Models;
 
-public class Boards
+public class Boards : IApiModel
 {
     [JsonPropertyName("boards")]
     public List<Board> BoardsList { get; set; } = new();
 }
 
-public class Board
+public class Board : IApiModel
 {
     [JsonPropertyName("board")]
     public string BoardCode { get; set; } = string.Empty;

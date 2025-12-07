@@ -6,13 +6,13 @@ using static System.Net.WebRequestMethods;
 
 namespace ChanSentry.Common.Models;
 
-public class Thread
+public class Thread : IApiModel
 {
     [JsonPropertyName("posts")]
     public List<Post> Posts { get; set; } = new();
 }
 
-public class Post
+public class Post : IApiModel
 {
     [JsonPropertyName("filename")]
     public string? FileName { get; set; }
@@ -26,5 +26,7 @@ public class Post
     [JsonPropertyName("time")]
     public long Timestamp { get; set; }
 
-    public string? GetFileUrl(string boardCode) => InternalFileIdentifier is null || FileExtension is null ? null : string.Format(Constants.Urls.FileUrlTemplate, boardCode, InternalFileIdentifier, FileExtension);
+    public string? GetFileUrl(string boardCode) => InternalFileIdentifier is null || FileExtension is null 
+        ? null 
+        : string.Format(Constants.Urls.FileUrlTemplate, boardCode, InternalFileIdentifier, FileExtension);
 }

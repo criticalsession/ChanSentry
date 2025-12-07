@@ -1,31 +1,23 @@
 ﻿using System.Text.Json;
+using ChanSentry.Common.Helpers;
+using ChanSentry.Common.Models;
+using ChanSentry.Tests.Helpers;
 
-namespace ChanSentry.Tests
+namespace ChanSentry.Tests.Common
 {
+    [TestFixture]
     public class ModelsTests
     {
-        [SetUp]
-        public void Setup()
-        {
-        }
-
         #region Board Tests
 
         [Test]
         public void Board_DeserializeFromJson_CorrectlyMapsProperties()
         {
             // Arrange
-            var json = """
-            {
-                "board": "g",
-                "title": "Technology",
-                "ws_board": 1,
-                "meta_description": "Discussion of technology and related topics."
-            }
-            """;
+            var json = TestDataHelper.GetSingleBoardJson();
 
             // Act
-            var board = JsonSerializer.Deserialize<Common.Models.Board>(json);
+            var board = JsonSerializer.Deserialize<Board>(json);
 
             // Assert
             Assert.That(board, Is.Not.Null);
@@ -42,27 +34,10 @@ namespace ChanSentry.Tests
         public void Boards_DeserializeFromJson_CorrectlyMapsBoardsList()
         {
             // Arrange
-            var json = """
-            {
-                "boards": [
-                    {
-                        "board": "g",
-                        "title": "Technology",
-                        "ws_board": 1,
-                        "meta_description": "Discussion of technology."
-                    },
-                    {
-                        "board": "pol",
-                        "title": "Politically Incorrect",
-                        "ws_board": 0,
-                        "meta_description": "Politics discussion."
-                    }
-                ]
-            }
-            """;
+            var json = TestDataHelper.GetMultipleBoardsJson();
 
             // Act
-            var boards = JsonSerializer.Deserialize<Common.Models.Boards>(json);
+            var boards = JsonSerializer.Deserialize<Boards>(json);
 
             // Assert
             Assert.That(boards, Is.Not.Null);
@@ -83,18 +58,10 @@ namespace ChanSentry.Tests
         public void CatalogThread_DeserializeFromJson_CorrectlyMapsProperties()
         {
             // Arrange
-            var json = """
-            {
-                "no": 98765432,
-                "sub": "Test Thread",
-                "com": "This is a test comment",
-                "replies": 42,
-                "images": 10
-            }
-            """;
+            var json = TestDataHelper.GetSingleCatalogThreadJson();
 
             // Act
-            var catalogThread = JsonSerializer.Deserialize<Common.Models.CatalogThread>(json);
+            var catalogThread = JsonSerializer.Deserialize<CatalogThread>(json);
 
             // Assert
             Assert.That(catalogThread, Is.Not.Null);
@@ -112,30 +79,10 @@ namespace ChanSentry.Tests
         public void CatalogThreads_DeserializeFromJson_CorrectlyMapsThreadList()
         {
             // Arrange
-            var json = """
-            {
-                "page": 0,
-                "threads": [
-                    {
-                        "no": 98765432,
-                        "sub": "Thread 1",
-                        "com": "Comment 1",
-                        "replies": 10,
-                        "images": 5
-                    },
-                    {
-                        "no": 98765433,
-                        "sub": "Thread 2",
-                        "com": "Comment 2",
-                        "replies": 20,
-                        "images": 8
-                    }
-                ]
-            }
-            """;
+            var json = TestDataHelper.GetMultipleCatalogThreadsJson();
 
             // Act
-            var catalogThreads = JsonSerializer.Deserialize<Common.Models.CatalogThreads>(json);
+            var catalogThreads = JsonSerializer.Deserialize<CatalogThreads>(json);
 
             // Assert
             Assert.That(catalogThreads, Is.Not.Null);
@@ -157,17 +104,10 @@ namespace ChanSentry.Tests
         public void Post_DeserializeFromJson_CorrectlyMapsProperties()
         {
             // Arrange
-            var json = """
-            {
-                "filename": "test_image",
-                "tim": 1745612650141704,
-                "ext": ".png",
-                "time": 1745612650
-            }
-            """;
+            var json = TestDataHelper.GetPostJsonWithAllFields();
 
             // Act
-            var post = JsonSerializer.Deserialize<Common.Models.Post>(json);
+            var post = JsonSerializer.Deserialize<Post>(json);
 
             // Assert
             Assert.That(post, Is.Not.Null);
@@ -184,17 +124,10 @@ namespace ChanSentry.Tests
         public void Post_DeserializeFromJson_WithNullValues_HandlesCorrectly()
         {
             // Arrange
-            var json = """
-            {
-                "filename": null,
-                "tim": null,
-                "ext": null,
-                "time": 1745612650
-            }
-            """;
+            var json = TestDataHelper.GetPostJsonWithNullableFields();
 
             // Act
-            var post = JsonSerializer.Deserialize<Common.Models.Post>(json);
+            var post = JsonSerializer.Deserialize<Post>(json);
 
             // Assert
             Assert.That(post, Is.Not.Null);
@@ -211,27 +144,10 @@ namespace ChanSentry.Tests
         public void Thread_DeserializeFromJson_CorrectlyMapsPostsList()
         {
             // Arrange
-            var json = """
-            {
-                "posts": [
-                    {
-                        "filename": "image1",
-                        "tim": 1745612650141704,
-                        "ext": ".png",
-                        "time": 1745612650
-                    },
-                    {
-                        "filename": null,
-                        "tim": null,
-                        "ext": null,
-                        "time": 1745612660
-                    }
-                ]
-            }
-            """;
+            var json = TestDataHelper.GetThreadJsonWithMultiplePosts();
 
             // Act
-            var thread = JsonSerializer.Deserialize<Common.Models.Thread>(json);
+            var thread = JsonSerializer.Deserialize<ChanSentry.Common.Models.Thread>(json);
 
             // Assert
             Assert.That(thread, Is.Not.Null);
@@ -248,25 +164,25 @@ namespace ChanSentry.Tests
         [Test]
         public void GetFileUrl_WithData_ReturnsCorrectFullFileUrl()
         {
-            var t = new Common.Models.Thread()
+            var t = new ChanSentry.Common.Models.Thread()
             {
-                Posts = new List<Common.Models.Post>()
+                Posts = new List<Post>()
                 {
-                    new Common.Models.Post()
+                    new Post()
                     {
                         FileExtension = ".png",
                         InternalFileIdentifier = 1745612650141704,
                         FileName = "sticky btfo",
                         Timestamp = 1745612650
                     },
-                    new Common.Models.Post()
+                    new Post()
                     {
                         FileExtension = ".png",
                         InternalFileIdentifier = 1745612666469146,
                         FileName = null,
                         Timestamp = 1745612666
                     },
-                    new Common.Models.Post()
+                    new Post()
                     {
                         FileExtension = null,
                         InternalFileIdentifier = 1745612680763609,
@@ -283,7 +199,6 @@ namespace ChanSentry.Tests
                 Assert.That(t.Posts[2].GetFileUrl("g"), Is.Null);
             });
         }
-
         #endregion
     }
 }
