@@ -13,16 +13,7 @@ public class DownloadHandler
     public async Task StartAsync()
     {
         var running = true;
-        List<WatchedThread>? watchedThreads = null;
-
-        if (!File.Exists(WatchedThreadsFile))
-        {
-            File.Create(WatchedThreadsFile).Dispose();
-            File.WriteAllLines(WatchedThreadsFile, ["[]"]);
-        }
-
-        var json = File.ReadAllText(WatchedThreadsFile);
-        watchedThreads = JsonSerializer.Deserialize<List<WatchedThread>>(json);
+        List<WatchedThread>? watchedThreads = ReadWatchedThreadsFromFile();
 
         while (running)
         {
@@ -61,14 +52,7 @@ public class DownloadHandler
                         var response = await httpClient.GetAsync(string.Format(Common.Constants.Urls.ThreadUrlTemplate, thread.Board, thread.ThreadId));
                         if (response.IsSuccessStatusCode)
                         {
-                            var content = await response.Content.ReadAsStringAsync();
-                            AnsiConsole.MarkupLine($"[blue]Successfully fetched thread {thread.ThreadId} on /{thread.Board}/[/]");
-
-                            var threadData = JsonHelper.Deserialize<Common.Models.Thread>(content);
-                            var mediaPosts = threadData.Posts.Where(post => post.HasMedia).ToList();
-
-                            var newMedia = mediaPosts.Skip(thread.TotalDownloadedFiles).ToList();
-                            AnsiConsole.MarkupLine($"[green]Found {newMedia.Count} new media files in thread {thread.ThreadId}[/]");
+                            (List<Post> mediaPosts, List<Post> newMedia) = await GetNewMediaListAsync(thread, response);
 
                             await DownloadMediaFilesAsync(newMedia, thread.Board, thread.ThreadId.ToString());
 
@@ -111,7 +95,7 @@ public class DownloadHandler
                         break;
                     }
                 }
-            }
+            } 
             catch (Exception ex)
             {
                 AnsiConsole.MarkupLine($"[red]Error reading watched threads: {ex.Message}[/]");
@@ -135,6 +119,34 @@ public class DownloadHandler
 
         AnsiConsole.MarkupLine("[dim]Returning to main menu...[/]");
         System.Threading.Thread.Sleep(500);
+    }
+
+    private static async Task<(List<Post> mediaPosts, List<Post> newMedia)> GetNewMediaListAsync(WatchedThread thread, HttpResponseMessage response)
+    {
+        var content = await response.Content.ReadAsStringAsync();
+        AnsiConsole.MarkupLine($"[blue]Successfully fetched thread {thread.ThreadId} on /{thread.Board}/[/]");
+
+        var threadData = JsonHelper.Deserialize<Common.Models.Thread>(content);
+        var mediaPosts = threadData.Posts.Where(post => post.HasMedia).ToList();
+
+        var newMedia = mediaPosts.Skip(thread.TotalDownloadedFiles).ToList();
+        AnsiConsole.MarkupLine($"[green]Found {newMedia.Count} new media files in thread {thread.ThreadId}[/]");
+        return (mediaPosts, newMedia);
+    }
+
+    private static List<WatchedThread>? ReadWatchedThreadsFromFile()
+    {
+        List<WatchedThread>? watchedThreads = null;
+
+        if (!File.Exists(WatchedThreadsFile))
+        {
+            File.Create(WatchedThreadsFile).Dispose();
+            File.WriteAllLines(WatchedThreadsFile, ["[]"]);
+        }
+
+        var json = File.ReadAllText(WatchedThreadsFile);
+        watchedThreads = JsonSerializer.Deserialize<List<WatchedThread>>(json);
+        return watchedThreads;
     }
 
     private void UpdateWatchedThreadsFile(List<WatchedThread>? watchedThreads)
