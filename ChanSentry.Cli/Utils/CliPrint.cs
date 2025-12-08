@@ -90,13 +90,4 @@ public static class CliPrint
                 throw new InvalidOperationException($"Invalid manage threads selection: {selection}");
         }
     }
-
-    /// <summary>
-    /// Displays the downloader view to the console.
-    /// </summary>
-    public static void PrintDownloaderMenu()
-    {
-        AnsiConsole.MarkupLine("Start Downloader");
-        AnsiConsole.WriteLine();
-    }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace ChanSentry.Common.Models;
 
@@ -25,7 +22,9 @@ public class Post : IApiModel
     [JsonPropertyName("time")]
     public long Timestamp { get; set; }
 
-    public string? GetFileUrl(string boardCode) => InternalFileIdentifier is null || FileExtension is null 
-        ? null 
-        : string.Format(Constants.Urls.FileUrlTemplate, boardCode, InternalFileIdentifier, FileExtension);
+    public bool HasMedia => InternalFileIdentifier.HasValue && FileExtension is not null;
+
+    public string? GetFileUrl(string boardCode) => HasMedia
+        ? string.Format(Constants.Urls.FileUrlTemplate, boardCode, InternalFileIdentifier, FileExtension)
+        : null;
 }

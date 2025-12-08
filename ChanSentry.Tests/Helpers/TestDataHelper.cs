@@ -1,3 +1,5 @@
+using ChanSentry.Common.Models;
+
 namespace ChanSentry.Tests.Helpers
 {
     /// <summary>
@@ -220,6 +222,231 @@ namespace ChanSentry.Tests.Helpers
         /// Returns null (for testing null handling)
         /// </summary>
         public static string? GetNullJson() => null;
+
+        #endregion
+
+        #region DownloadHandler Test Data
+
+        /// <summary>
+        /// Returns a thread JSON with media posts
+        /// </summary>
+        public static string GetThreadJsonWithMediaPosts(int mediaPostCount = 2)
+        {
+            var posts = new List<string>();
+            for (int i = 0; i < mediaPostCount; i++)
+            {
+                posts.Add($$"""
+                {
+                    "filename": "image{{i}}",
+                    "tim": {{1234567890 + i}},
+                    "ext": ".jpg",
+                    "time": {{1638360000 + (i * 30)}}
+                }
+                """);
+            }
+            return $$"""
+            {
+                "posts": [{{string.Join(",", posts)}}]
+            }
+            """;
+        }
+
+        /// <summary>
+        /// Returns a thread JSON with mixed media and non-media posts
+        /// </summary>
+        public static string GetThreadJsonWithMixedPosts()
+        {
+            return """
+            {
+                "posts": [
+                    {
+                        "filename": "image1",
+                        "tim": 1234567890,
+                        "ext": ".jpg",
+                        "time": 1638360000
+                    },
+                    {
+                        "time": 1638360050
+                    },
+                    {
+                        "filename": "image2",
+                        "tim": 9876543210,
+                        "ext": ".png",
+                        "time": 1638360100
+                    },
+                    {
+                        "time": 1638360150
+                    }
+                ]
+            }
+            """;
+        }
+
+        /// <summary>
+        /// Returns a complex thread JSON with multiple types of posts
+        /// </summary>
+        public static string GetComplexThreadJson()
+        {
+            return """
+            {
+                "posts": [
+                    {
+                        "filename": "op_image",
+                        "tim": 1000000001,
+                        "ext": ".jpg",
+                        "time": 1638360000
+                    },
+                    {
+                        "time": 1638360030
+                    },
+                    {
+                        "filename": "reply_image1",
+                        "tim": 1000000002,
+                        "ext": ".png",
+                        "time": 1638360060
+                    },
+                    {
+                        "time": 1638360090
+                    },
+                    {
+                        "filename": "reply_image2",
+                        "tim": 1000000003,
+                        "ext": ".gif",
+                        "time": 1638360120
+                    },
+                    {
+                        "filename": "reply_image3",
+                        "tim": 1000000004,
+                        "ext": ".webm",
+                        "time": 1638360150
+                    },
+                    {
+                        "time": 1638360180
+                    }
+                ]
+            }
+            """;
+        }
+
+        /// <summary>
+        /// Returns a watched thread JSON with specified properties
+        /// </summary>
+        public static string GetWatchedThreadJson(
+            string board = "g",
+            long threadId = 12345,
+            string subject = "Test Thread",
+            int errorCount = 0,
+            int totalDownloadedFiles = 5)
+        {
+            return $$"""
+            {
+                "Board": "{{board}}",
+                "ThreadId": {{threadId}},
+                "Subject": "{{subject}}",
+                "ErrorCount": {{errorCount}},
+                "TotalDownloadedFiles": {{totalDownloadedFiles}},
+                "LastChecked": "2024-01-01T00:00:00Z"
+            }
+            """;
+        }
+
+        /// <summary>
+        /// Returns a watched threads JSON array
+        /// </summary>
+        public static string GetWatchedThreadsJson()
+        {
+            return """
+            [
+                {
+                    "Board": "g",
+                    "ThreadId": 12345,
+                    "Subject": "Test Thread 1",
+                    "ErrorCount": 0,
+                    "TotalDownloadedFiles": 5,
+                    "LastChecked": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "Board": "pol",
+                    "ThreadId": 67890,
+                    "Subject": "Test Thread 2",
+                    "ErrorCount": 1,
+                    "TotalDownloadedFiles": 3,
+                    "LastChecked": "2024-01-01T00:00:00Z"
+                }
+            ]
+            """;
+        }
+
+        /// <summary>
+        /// Returns an empty watched threads JSON array
+        /// </summary>
+        public static string GetEmptyWatchedThreadsJson() => "[]";
+
+        /// <summary>
+        /// Common test board codes
+        /// </summary>
+        public static string[] GetTestBoardCodes() => new[] { "g", "pol", "b", "fit", "wg", "tv", "vg" };
+
+        /// <summary>
+        /// Common test file extensions
+        /// </summary>
+        public static string[] GetTestFileExtensions() => new[] { ".jpg", ".jpeg", ".png", ".gif", ".webm", ".mp4", ".pdf" };
+
+        /// <summary>
+        /// Common test thread IDs
+        /// </summary>
+        public static string[] GetTestThreadIds() => new[] { "12345", "67890", "11111", "22222", "33333" };
+
+        /// <summary>
+        /// Creates a test Post with media
+        /// </summary>
+        public static Post CreateTestPostWithMedia(
+            long internalFileId = 1234567890,
+            string extension = ".jpg",
+            string fileName = "testfile")
+        {
+            return new Post
+            {
+                InternalFileIdentifier = internalFileId,
+                FileExtension = extension,
+                FileName = fileName,
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+        }
+
+        /// <summary>
+        /// Creates a test Post without media
+        /// </summary>
+        public static Post CreateTestPostWithoutMedia()
+        {
+            return new Post
+            {
+                InternalFileIdentifier = null,
+                FileExtension = null,
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+        }
+
+        /// <summary>
+        /// Creates a test WatchedThread
+        /// </summary>
+        public static WatchedThread CreateTestWatchedThread(
+            string board = "g",
+            long threadId = 12345,
+            string subject = "Test Thread",
+            int errorCount = 0,
+            int totalDownloadedFiles = 0)
+        {
+            return new WatchedThread
+            {
+                Board = board,
+                ThreadId = threadId,
+                Subject = subject,
+                ErrorCount = errorCount,
+                TotalDownloadedFiles = totalDownloadedFiles,
+                LastChecked = DateTime.MinValue
+            };
+        }
 
         #endregion
     }
