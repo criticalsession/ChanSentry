@@ -11,4 +11,8 @@
     <ProjectReference Include="..\ChanSentry.Common\ChanSentry.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.54.0" />
+  </ItemGroup>
+
 </Project>

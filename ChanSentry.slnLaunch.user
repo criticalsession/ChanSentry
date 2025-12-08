@@ -7,7 +7,7 @@
         "Action": "Start"
       },
       {
-        "Path": "ChanSentry.Manager\\ChanSentry.Manager.csproj",
+        "Path": "ChanSentry.Cli\\ChanSentry.CLI.csproj",
         "Action": "Start"
       }
     ]
