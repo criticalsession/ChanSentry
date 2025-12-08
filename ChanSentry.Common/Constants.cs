@@ -48,6 +48,9 @@ public static class Constants
         public const string FileUrlTemplate = $"{BaseFileUrl}/{{0}}/{{1}}{{2}}";
     }
 
+    /// <summary>
+    /// Contains constants for menu navigation and actions in the CLI application.
+    /// </summary>
     public static class Menus
     {
         public const string Main = "MAIN";

@@ -1,5 +1,5 @@
-﻿using ChanSentry.CLI;
-using ChanSentry.CLI.Utils;
+﻿using ChanSentry.Cli;
+using ChanSentry.Cli.Utils;
 using Spectre.Console;
 using ChanSentry.Common;
 
@@ -13,7 +13,8 @@ while (true)
 
     if (currentMenu == Constants.Menus.Main)
     {
-        switch (CliPrint.PrintMainMenu())
+        var selectedOption = CliPrint.PrintMainMenu();
+        switch (selectedOption)
         {
             case Constants.Menus.ManageThreads:
                 currentMenu = Constants.Menus.ManageThreads;
@@ -24,11 +25,14 @@ while (true)
             case Constants.Menus.Exit:
                 CliPrint.PrintGoodbye();
                 return;
+            default:
+                throw new InvalidOperationException($"Unexpected menu value: {selectedOption}");
         }
     }
     else if (currentMenu == Constants.Menus.ManageThreads)
     {
-        switch (CliPrint.PrintManageMenu())
+        var selectedOption = CliPrint.PrintManageMenu();
+        switch (selectedOption)
         {
             case Constants.Menus.AddThread:
                 AnsiConsole.MarkupLine("Add... (not implemented yet)");
@@ -43,6 +47,8 @@ while (true)
             case Constants.Menus.Back:
                 currentMenu = Constants.Menus.Main;
                 continue;
+            default:
+                throw new InvalidOperationException($"Unexpected menu value: {selectedOption}");
         }
     } 
     else if (currentMenu == Constants.Menus.Downloader)
@@ -50,5 +56,11 @@ while (true)
         CliPrint.PrintDownloaderMenu();
         Thread.Sleep(1000);
         currentMenu = Constants.Menus.Main;
+    }
+    else
+    {
+        AnsiConsole.MarkupLine($"[red]Error: Unknown menu state '{currentMenu}'[/]");
+        currentMenu = Constants.Menus.Main;
+        Thread.Sleep(2000);
     }
 }
