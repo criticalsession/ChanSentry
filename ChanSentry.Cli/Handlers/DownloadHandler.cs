@@ -204,7 +204,7 @@ public class DownloadHandler
                 if (string.IsNullOrEmpty(fileUrl))
                     continue;
 
-                var fileName = $"{post.InternalFileIdentifier}{post.FileExtension}";
+                var fileName = $"{(!string.IsNullOrEmpty(post.FileName) ? post.FileName + " - " : "")}{post.InternalFileIdentifier}{post.FileExtension}";
                 var filePath = Path.Combine(downloadPath, fileName);
 
                 // Skip if file already exists
