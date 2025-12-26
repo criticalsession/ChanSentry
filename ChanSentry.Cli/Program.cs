@@ -1,7 +1,7 @@
-﻿using ChanSentry.Cli;
-using ChanSentry.Cli.Utils;
+﻿using ChanSentry.Cli.Utils;
 using Spectre.Console;
 using ChanSentry.Common;
+using ChanSentry.CLI.Handlers;
 
 var currentMenu = Constants.Menus.Main;
 
@@ -53,8 +53,8 @@ while (true)
     } 
     else if (currentMenu == Constants.Menus.Downloader)
     {
-        CliPrint.PrintDownloaderMenu();
-        Thread.Sleep(1000);
+        var downloader = new DownloadHandler();
+        await downloader.StartAsync();
         currentMenu = Constants.Menus.Main;
     }
     else
