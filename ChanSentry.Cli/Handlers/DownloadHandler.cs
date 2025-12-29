@@ -204,13 +204,15 @@ public class DownloadHandler
                 if (string.IsNullOrEmpty(fileUrl))
                     continue;
 
-                var fileName = $"{(!string.IsNullOrEmpty(post.FileName) ? post.FileName + " - " : "")}{post.InternalFileIdentifier}{post.FileExtension}";
+                var sanitizedFileName = FileNameSanitizer.Sanitize(post.FileName);
+                var fileName = $"{(!string.IsNullOrEmpty(sanitizedFileName) ? sanitizedFileName + " - " : "")}{post.InternalFileIdentifier}{post.FileExtension}";
                 var filePath = Path.Combine(downloadPath, fileName);
 
                 // Skip if file already exists
                 if (File.Exists(filePath))
                 {
-                    AnsiConsole.MarkupLine($"[grey]> File {fileName} already exists[/]");
+                    var displayFileName = FileNameSanitizer.EscapeMarkup(fileName);
+                    AnsiConsole.MarkupLine($"[grey]> File {displayFileName} already exists[/]");
                     continue;
                 }
 
@@ -220,11 +222,13 @@ public class DownloadHandler
                 {
                     var fileBytes = await response.Content.ReadAsByteArrayAsync();
                     await File.WriteAllBytesAsync(filePath, fileBytes);
-                    AnsiConsole.MarkupLine($"[green]> Downloaded {fileName}[/]");
+                    var displayFileName = FileNameSanitizer.EscapeMarkup(fileName);
+                    AnsiConsole.MarkupLine($"[green]> Downloaded {displayFileName}[/]");
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[red]> Failed to download {fileName} - Status: {response.StatusCode}[/]");
+                    var displayFileName = FileNameSanitizer.EscapeMarkup(fileName);
+                    AnsiConsole.MarkupLine($"[red]> Failed to download {displayFileName} - Status: {response.StatusCode}[/]");
                 }
 
                 // Be respectful to the server
