@@ -7,11 +7,13 @@ namespace ChanSentry.Tests.Services;
 public class MediaDownloadServiceTests
 {
     private string _testDirectory = string.Empty;
+    private string _originalDirectory = string.Empty;
     private MediaDownloadService _service = null!;
 
     [SetUp]
     public void SetUp()
     {
+        _originalDirectory = Directory.GetCurrentDirectory();
         _testDirectory = Path.Combine(Path.GetTempPath(), $"ChanSentryTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(_testDirectory);
         Directory.SetCurrentDirectory(_testDirectory);
@@ -22,6 +24,17 @@ public class MediaDownloadServiceTests
     [TearDown]
     public void TearDown()
     {
+        try
+        {
+            // Restore original directory first
+            Directory.SetCurrentDirectory(_originalDirectory);
+        }
+        catch
+        {
+            // If original directory doesn't exist, set to temp
+            Directory.SetCurrentDirectory(Path.GetTempPath());
+        }
+        
         if (Directory.Exists(_testDirectory))
         {
             try
