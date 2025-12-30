@@ -43,10 +43,12 @@ public class ThreadProcessingServiceTests
         }
         catch
         {
-            // Expected to fail due to actual HTTP call, but LastChecked should be updated
+            // Expected to fail due to actual HTTP call
         }
 
-        Assert.That(thread.LastChecked, Is.GreaterThan(originalLastChecked));
+        // LastChecked is only updated on successful fetch or not-modified response
+        // On error, it remains unchanged. We verify the method executed by checking error count
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     [Test]
@@ -63,8 +65,8 @@ public class ThreadProcessingServiceTests
             // Expected to fail due to HTTP
         }
 
-        // Verify the method executed by checking LastChecked was updated
-        Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+        // Verify the method executed by checking error count was incremented
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     [Test]
@@ -81,10 +83,8 @@ public class ThreadProcessingServiceTests
             // Expected to fail
         }
 
-        // The method executes and displays messages through Spectre.Console
-        // which doesn't write to standard console output in the same way
-        // We verify the thread was processed by checking LastChecked was updated
-        Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+        // Verify the thread was processed by checking error count
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     [Test]
@@ -107,8 +107,8 @@ public class ThreadProcessingServiceTests
             // Expected to fail
         }
 
-        // Verify the thread was processed
-        Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+        // Verify the thread was processed by checking error count
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     #endregion
@@ -130,8 +130,8 @@ public class ThreadProcessingServiceTests
             // Expected
         }
 
-        // Error count should be incremented (though we can't test full flow without mocking)
-        Assert.Pass("Error handling requires HTTP mocking for complete testing");
+        // Verify error count was incremented
+        Assert.That(thread.ErrorCount, Is.GreaterThan(initialErrorCount));
     }
 
     #endregion
@@ -171,8 +171,8 @@ public class ThreadProcessingServiceTests
             // Expected
         }
 
-        // Verify the thread was processed
-        Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+        // Verify the method executed by checking error count
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     [Test]
@@ -189,8 +189,8 @@ public class ThreadProcessingServiceTests
             // Expected
         }
 
-        // Verify the thread was processed without errors
-        Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+        // Verify the method executed without crashing
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     #endregion
@@ -215,7 +215,8 @@ public class ThreadProcessingServiceTests
                 // Expected HTTP failure
             }
             
-            Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+            // Verify error count was incremented for each board
+            Assert.That(thread.ErrorCount, Is.GreaterThan(0));
         }
     }
 
@@ -239,7 +240,8 @@ public class ThreadProcessingServiceTests
             // Expected
         }
 
-        Assert.That(thread.LastChecked, Is.GreaterThan(DateTime.MinValue));
+        // Verify error count was incremented
+        Assert.That(thread.ErrorCount, Is.GreaterThan(0));
     }
 
     [Test]
@@ -247,25 +249,23 @@ public class ThreadProcessingServiceTests
     {
         var thread = TestDataHelper.CreateTestWatchedThread("g", 12345, "Test");
         
-        DateTime firstCheck = DateTime.MinValue;
-        DateTime secondCheck = DateTime.MinValue;
+        var initialErrorCount = thread.ErrorCount;
 
         try
         {
             await _service.ProcessThreadAsync(thread);
-            firstCheck = thread.LastChecked;
             
             await Task.Delay(100);
             
             await _service.ProcessThreadAsync(thread);
-            secondCheck = thread.LastChecked;
         }
         catch
         {
             // Expected HTTP failure
         }
 
-        Assert.That(secondCheck, Is.GreaterThanOrEqualTo(firstCheck));
+        // Verify error count increased with multiple calls
+        Assert.That(thread.ErrorCount, Is.GreaterThan(initialErrorCount));
     }
 
     #endregion
@@ -332,7 +332,7 @@ public class ThreadProcessingServiceTests
         // 3. Or using dependency injection
         
         // Current tests verify:
-        // - LastChecked updates
+        // - Error handling and error count incrementation
         // - Console output
         // - Error handling structure
         // - Edge cases
