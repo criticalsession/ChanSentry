@@ -22,6 +22,9 @@ public class Post : IApiModel
     [JsonPropertyName("time")]
     public long Timestamp { get; set; }
 
+    [JsonPropertyName("sub")]
+    public string? Subject { get; set; }
+
     public bool HasMedia => InternalFileIdentifier.HasValue && FileExtension is not null;
 
     public string? GetFileUrl(string boardCode) => HasMedia

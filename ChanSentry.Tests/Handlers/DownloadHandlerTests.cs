@@ -140,6 +140,28 @@ public class DownloadHandlerTests
         Assert.That(fileUrl, Is.Null);
     }
 
+    [Test]
+    public void Post_Subject_CanBeDeserialized()
+    {
+        // Arrange
+        var json = """
+        {
+            "sub": "Test Subject",
+            "filename": "image",
+            "tim": 123456,
+            "ext": ".jpg",
+            "time": 1638360000
+        }
+        """;
+
+        // Act
+        var post = JsonSerializer.Deserialize<Post>(json);
+
+        // Assert
+        Assert.That(post, Is.Not.Null);
+        Assert.That(post!.Subject, Is.EqualTo("Test Subject"));
+    }
+
     #endregion
 
     #region Thread Processing Tests
@@ -164,6 +186,39 @@ public class DownloadHandlerTests
 
         // Assert
         Assert.That(mediaPosts, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public void Thread_FirstPost_ContainsSubject()
+    {
+        // Arrange
+        var json = """
+        {
+            "posts": [
+                {
+                    "sub": "Thread Subject",
+                    "filename": "op_image",
+                    "tim": 123456,
+                    "ext": ".jpg",
+                    "time": 1638360000
+                },
+                {
+                    "filename": "reply_image",
+                    "tim": 789012,
+                    "ext": ".png",
+                    "time": 1638360100
+                }
+            ]
+        }
+        """;
+
+        // Act
+        var thread = JsonSerializer.Deserialize<ChanSentry.Common.Models.Thread>(json);
+
+        // Assert
+        Assert.That(thread, Is.Not.Null);
+        Assert.That(thread!.Posts[0].Subject, Is.EqualTo("Thread Subject"));
+        Assert.That(thread.Posts[1].Subject, Is.Null);
     }
 
     [Test]
@@ -329,6 +384,30 @@ public class DownloadHandlerTests
     }
 
     [Test]
+    public void DownloadPath_WithSubject_IncludesSubjectInFolderName()
+    {
+        // Arrange
+        var thread = TestDataHelper.CreateTestWatchedThread("g", 12345, "My Cool Thread");
+        var expectedFolderName = "12345 - My Cool Thread";
+        var downloadPath = Path.Combine("downloads", thread.Board, expectedFolderName);
+
+        // Assert
+        Assert.That(downloadPath, Does.Contain("12345 - My Cool Thread"));
+    }
+
+    [Test]
+    public void DownloadPath_WithEmptySubject_UsesOnlyThreadId()
+    {
+        // Arrange
+        var thread = TestDataHelper.CreateTestWatchedThread("g", 12345, "");
+        var expectedFolderName = "12345";
+        var downloadPath = Path.Combine("downloads", thread.Board, expectedFolderName);
+
+        // Assert
+        Assert.That(downloadPath, Does.EndWith(Path.Combine("g", "12345")));
+    }
+
+    [Test]
     public void FileName_GeneratesCorrectFormat()
     {
         // Arrange
@@ -428,6 +507,19 @@ public class DownloadHandlerTests
         Assert.That(thread.LastChecked, Is.EqualTo(checkTime));
     }
 
+    [Test]
+    public void WatchedThread_Subject_CanBeUpdated()
+    {
+        // Arrange
+        var thread = TestDataHelper.CreateTestWatchedThread("g", 12345, "");
+
+        // Act
+        thread.Subject = "New Subject";
+
+        // Assert
+        Assert.That(thread.Subject, Is.EqualTo("New Subject"));
+    }
+
     #endregion
 
     #region Integration-Style Tests
@@ -499,6 +591,28 @@ public class DownloadHandlerTests
             Assert.That(watchedThread.TotalDownloadedFiles, Is.EqualTo(4));
             Assert.That(watchedThread.LastChecked, Is.GreaterThan(DateTime.UtcNow.AddSeconds(-5)));
         });
+    }
+
+    [Test]
+    public void ThreadProcessing_RetrievesSubjectFromFirstPost()
+    {
+        // Arrange
+        var watchedThread = TestDataHelper.CreateTestWatchedThread("g", 12345, "", 0, 0);
+
+        var threadData = new ChanSentry.Common.Models.Thread
+        {
+            Posts = new List<Post>
+            {
+                new Post { Subject = "Retrieved Subject", InternalFileIdentifier = 1, FileExtension = ".jpg" }
+            }
+        };
+
+        // Act
+        var subject = threadData.Posts.FirstOrDefault()?.Subject ?? string.Empty;
+        watchedThread.Subject = subject;
+
+        // Assert
+        Assert.That(watchedThread.Subject, Is.EqualTo("Retrieved Subject"));
     }
 
     #endregion

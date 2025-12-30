@@ -230,13 +230,17 @@ namespace ChanSentry.Tests.Helpers
         /// <summary>
         /// Returns a thread JSON with media posts
         /// </summary>
-        public static string GetThreadJsonWithMediaPosts(int mediaPostCount = 2)
+        public static string GetThreadJsonWithMediaPosts(int mediaPostCount = 2, string? subject = null)
         {
             var posts = new List<string>();
             for (int i = 0; i < mediaPostCount; i++)
             {
+                var subjectField = i == 0 && subject != null ? $"""
+                    "sub": "{subject}",
+                """ : "";
                 posts.Add($$"""
                 {
+                    {{subjectField}}
                     "filename": "image{{i}}",
                     "tim": {{1234567890 + i}},
                     "ext": ".jpg",
@@ -254,12 +258,16 @@ namespace ChanSentry.Tests.Helpers
         /// <summary>
         /// Returns a thread JSON with mixed media and non-media posts
         /// </summary>
-        public static string GetThreadJsonWithMixedPosts()
+        public static string GetThreadJsonWithMixedPosts(string? subject = null)
         {
-            return """
+            var subjectField = subject != null ? $"""
+                "sub": "{subject}",
+            """ : "";
+            return $$"""
             {
                 "posts": [
                     {
+                        {{subjectField}}
                         "filename": "image1",
                         "tim": 1234567890,
                         "ext": ".jpg",
@@ -285,12 +293,16 @@ namespace ChanSentry.Tests.Helpers
         /// <summary>
         /// Returns a complex thread JSON with multiple types of posts
         /// </summary>
-        public static string GetComplexThreadJson()
+        public static string GetComplexThreadJson(string? subject = null)
         {
-            return """
+            var subjectField = subject != null ? $"""
+                "sub": "{subject}",
+            """ : "";
+            return $$"""
             {
                 "posts": [
                     {
+                        {{subjectField}}
                         "filename": "op_image",
                         "tim": 1000000001,
                         "ext": ".jpg",
