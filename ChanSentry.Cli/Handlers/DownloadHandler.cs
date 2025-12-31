@@ -89,7 +89,7 @@ public class DownloadHandler
 
     private static void DisplayNoThreadsMessage()
     {
-        AnsiConsole.MarkupLine("[yellow]No threads found in watched-threads.json[/]");
+        AnsiConsole.MarkupLine("[yellow]No threads found in watched-threads.json[/]");  
         AnsiConsole.MarkupLine("[dim]Press any key to return to main menu...[/]");
         Console.ReadKey(true);
     }
@@ -115,10 +115,10 @@ public class DownloadHandler
 
     private static async Task<bool> CountdownWithExitCheckAsync(int seconds)
     {
-        for (int i = seconds; i > 0; i--)
+        for (int i = seconds * 100; i > 0; i--)
         {
-            DisplayCountdown(i, seconds);
-            await Task.Delay(1000);
+            DisplayCountdown((int)Math.Ceiling(i / 100.0), seconds);
+            await Task.Delay(10);
 
             if (CheckExitKeys())
             {
