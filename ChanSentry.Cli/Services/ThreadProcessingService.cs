@@ -1,20 +1,26 @@
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Cli.Utils;
 using ChanSentry.Common.Models;
 using Spectre.Console;
 
 namespace ChanSentry.CLI.Services;
 
-public class ThreadProcessingService
+public class ThreadProcessingService : IThreadProcessingService
 {
-    private readonly ThreadFetchService _fetchService;
-    private readonly MediaDownloadService _downloadService;
-    private readonly WatchedThreadService _watchedThreadService;
+    private readonly IThreadFetchService _fetchService;
+    private readonly IMediaDownloadService _downloadService;
+    private readonly IWatchedThreadService _watchedThreadService;
+
+    public ThreadProcessingService(IThreadFetchService fetchService, IMediaDownloadService downloadService, IWatchedThreadService watchedThreadService)
+    {
+        _fetchService = fetchService;
+        _downloadService = downloadService;
+        _watchedThreadService = watchedThreadService;
+    }
 
     public ThreadProcessingService()
+        : this(new ThreadFetchService(), new MediaDownloadService(), new WatchedThreadService())
     {
-        _fetchService = new ThreadFetchService();
-        _downloadService = new MediaDownloadService();
-        _watchedThreadService = new WatchedThreadService();
     }
 
     public async Task ProcessThreadAsync(WatchedThread thread, List<WatchedThread> allWatchedThreads)

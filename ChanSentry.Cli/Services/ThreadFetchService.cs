@@ -1,10 +1,11 @@
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Common.Helpers;
 using ChanSentry.Common.Models;
 using Spectre.Console;
 
 namespace ChanSentry.CLI.Services;
 
-public class ThreadFetchService
+public class ThreadFetchService : IThreadFetchService
 {
     private const string UserAgent = "ChanSentry/1.0";
 

@@ -1,4 +1,5 @@
 ﻿using ChanSentry.CLI.Services;
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Cli.Utils;
 using ChanSentry.Common.Models;
 using Spectre.Console;
@@ -7,13 +8,18 @@ namespace ChanSentry.CLI.Handlers;
 
 public class DownloadHandler
 {
-    private readonly WatchedThreadService _watchedThreadService;
-    private readonly ThreadProcessingService _threadProcessingService;
+    private readonly IWatchedThreadService _watchedThreadService;
+    private readonly IThreadProcessingService _threadProcessingService;
+
+    public DownloadHandler(IWatchedThreadService watchedThreadService, IThreadProcessingService threadProcessingService)
+    {
+        _watchedThreadService = watchedThreadService;
+        _threadProcessingService = threadProcessingService;
+    }
 
     public DownloadHandler()
+        : this(new WatchedThreadService(), new ThreadProcessingService())
     {
-        _watchedThreadService = new WatchedThreadService();
-        _threadProcessingService = new ThreadProcessingService();
     }
 
     public async Task StartAsync()
