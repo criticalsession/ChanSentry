@@ -9,6 +9,7 @@ namespace ChanSentry.Cli.Utils;
 public static class FileNameSanitizer
 {
     private static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
+    private static readonly char[] AdditionalInvalidChars = { '"', '\'', '[', ']' };
     
     /// <summary>
     /// Sanitizes a filename by removing or replacing invalid characters for the operating system
@@ -27,11 +28,7 @@ public static class FileNameSanitizer
 
         foreach (var c in fileName)
         {
-            if (InvalidFileNameChars.Contains(c))
-            {
-                sanitized.Append('_');
-            }
-            else if (c == '[' || c == ']')
+            if (InvalidFileNameChars.Contains(c) || AdditionalInvalidChars.Contains(c))
             {
                 sanitized.Append('_');
             }
