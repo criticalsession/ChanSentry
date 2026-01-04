@@ -63,7 +63,7 @@ public class DownloadHandler
         {
             var thread = activeThreads[i];
             
-            await _threadProcessingService.ProcessThreadAsync(thread);
+            await _threadProcessingService.ProcessThreadAsync(thread, watchedThreads);
             _watchedThreadService.SaveWatchedThreads(watchedThreads);
 
             if (i < activeThreads.Count - 1)

@@ -8,14 +8,16 @@ public class ThreadProcessingService
 {
     private readonly ThreadFetchService _fetchService;
     private readonly MediaDownloadService _downloadService;
+    private readonly WatchedThreadService _watchedThreadService;
 
     public ThreadProcessingService()
     {
         _fetchService = new ThreadFetchService();
         _downloadService = new MediaDownloadService();
+        _watchedThreadService = new WatchedThreadService();
     }
 
-    public async Task ProcessThreadAsync(WatchedThread thread)
+    public async Task ProcessThreadAsync(WatchedThread thread, List<WatchedThread> allWatchedThreads)
     {
         DisplayThreadCheckMessage(thread);
         
@@ -33,7 +35,7 @@ public class ThreadProcessingService
         }
         else
         {
-            HandleFetchError(thread, fetchResult.StatusCode);
+            HandleFetchError(thread, allWatchedThreads, fetchResult.StatusCode);
         }
     }
 
@@ -82,7 +84,7 @@ public class ThreadProcessingService
         AnsiConsole.MarkupLine($"[blue]Thread {thread.ThreadId} on /{thread.Board}/ has not been modified since last check.[/]");
     }
 
-    private static void HandleFetchError(WatchedThread thread, System.Net.HttpStatusCode? statusCode)
+    private void HandleFetchError(WatchedThread thread, List<WatchedThread> allWatchedThreads, System.Net.HttpStatusCode? statusCode)
     {
         thread.ErrorCount++;
         
@@ -91,6 +93,8 @@ public class ThreadProcessingService
         if (thread.ErrorCount >= 3)
         {
             AnsiConsole.MarkupLine($"[red]Thread has failed {thread.ErrorCount} times and will be deleted from Watched Threads list.[/]");
+            allWatchedThreads.Remove(thread);
+            _watchedThreadService.SaveWatchedThreads(allWatchedThreads);
         }
     }
 }
