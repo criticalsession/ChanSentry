@@ -47,7 +47,10 @@ public class DownloadHandler
 
     private async Task<bool> ProcessThreadsLoopAsync(List<WatchedThread> watchedThreads)
     {
-        await ProcessAllThreadsAsync(watchedThreads);
+        var shouldContinue = await ProcessAllThreadsAsync(watchedThreads);
+        
+        if (!shouldContinue)
+            return false;
         
         watchedThreads = _watchedThreadService.RemoveFailedThreads(watchedThreads);
         _watchedThreadService.SaveWatchedThreads(watchedThreads);
@@ -55,7 +58,7 @@ public class DownloadHandler
         return !CheckExitKeys() && await CountdownWithExitCheckAsync(10);
     }
 
-    private async Task ProcessAllThreadsAsync(List<WatchedThread> watchedThreads)
+    private async Task<bool> ProcessAllThreadsAsync(List<WatchedThread> watchedThreads)
     {
         var activeThreads = watchedThreads.Where(t => t.ErrorCount < 3).ToList();
 
@@ -69,9 +72,11 @@ public class DownloadHandler
             if (i < activeThreads.Count - 1)
             {
                 if (!await CountdownWithExitCheckAsync(2))
-                    return;
+                    return false;
             }
         }
+        
+        return true;
     }
 
     private static bool HasWatchedThreads(List<WatchedThread>? watchedThreads)
