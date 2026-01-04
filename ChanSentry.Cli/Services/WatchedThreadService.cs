@@ -1,9 +1,10 @@
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Common.Models;
 using System.Text.Json;
 
 namespace ChanSentry.CLI.Services;
 
-public class WatchedThreadService
+public class WatchedThreadService : IWatchedThreadService
 {
     private const string WatchedThreadsFile = "watched-threads.json";
 

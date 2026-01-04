@@ -1,10 +1,11 @@
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Cli.Utils;
 using ChanSentry.Common.Models;
 using Spectre.Console;
 
 namespace ChanSentry.CLI.Services;
 
-public class MediaDownloadService
+public class MediaDownloadService : IMediaDownloadService
 {
     private const string UserAgent = "ChanSentry/1.0";
     private const int DelayBetweenDownloadsMs = 100;

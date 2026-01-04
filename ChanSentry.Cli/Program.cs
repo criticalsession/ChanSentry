@@ -35,13 +35,13 @@ while (true)
         switch (selectedOption)
         {
             case Constants.Menus.AddThread:
-                AnsiConsole.MarkupLine("Add... (not implemented yet)");
-                Thread.Sleep(1000);
+                var addHandler = new ManageThreadsHandler();
+                await addHandler.AddThreadAsync();
                 currentMenu = Constants.Menus.ManageThreads;
                 break;
             case Constants.Menus.ListDeleteThreads:
-                AnsiConsole.MarkupLine("List/delete... (not implemented yet)");
-                Thread.Sleep(1000);
+                var manageHandler = new ManageThreadsHandler();
+                manageHandler.ListAndDeleteThreads();
                 currentMenu = Constants.Menus.ManageThreads;
                 break;
             case Constants.Menus.Back:

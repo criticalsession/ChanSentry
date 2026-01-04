@@ -1,21 +1,29 @@
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Cli.Utils;
 using ChanSentry.Common.Models;
 using Spectre.Console;
 
 namespace ChanSentry.CLI.Services;
 
-public class ThreadProcessingService
+public class ThreadProcessingService : IThreadProcessingService
 {
-    private readonly ThreadFetchService _fetchService;
-    private readonly MediaDownloadService _downloadService;
+    private readonly IThreadFetchService _fetchService;
+    private readonly IMediaDownloadService _downloadService;
+    private readonly IWatchedThreadService _watchedThreadService;
 
-    public ThreadProcessingService()
+    public ThreadProcessingService(IThreadFetchService fetchService, IMediaDownloadService downloadService, IWatchedThreadService watchedThreadService)
     {
-        _fetchService = new ThreadFetchService();
-        _downloadService = new MediaDownloadService();
+        _fetchService = fetchService;
+        _downloadService = downloadService;
+        _watchedThreadService = watchedThreadService;
     }
 
-    public async Task ProcessThreadAsync(WatchedThread thread)
+    public ThreadProcessingService()
+        : this(new ThreadFetchService(), new MediaDownloadService(), new WatchedThreadService())
+    {
+    }
+
+    public async Task ProcessThreadAsync(WatchedThread thread, List<WatchedThread> allWatchedThreads)
     {
         DisplayThreadCheckMessage(thread);
         
@@ -33,7 +41,7 @@ public class ThreadProcessingService
         }
         else
         {
-            HandleFetchError(thread, fetchResult.StatusCode);
+            HandleFetchError(thread, allWatchedThreads, fetchResult.StatusCode);
         }
     }
 
@@ -82,7 +90,7 @@ public class ThreadProcessingService
         AnsiConsole.MarkupLine($"[blue]Thread {thread.ThreadId} on /{thread.Board}/ has not been modified since last check.[/]");
     }
 
-    private static void HandleFetchError(WatchedThread thread, System.Net.HttpStatusCode? statusCode)
+    private void HandleFetchError(WatchedThread thread, List<WatchedThread> allWatchedThreads, System.Net.HttpStatusCode? statusCode)
     {
         thread.ErrorCount++;
         
@@ -91,6 +99,8 @@ public class ThreadProcessingService
         if (thread.ErrorCount >= 3)
         {
             AnsiConsole.MarkupLine($"[red]Thread has failed {thread.ErrorCount} times and will be deleted from Watched Threads list.[/]");
+            allWatchedThreads.Remove(thread);
+            _watchedThreadService.SaveWatchedThreads(allWatchedThreads);
         }
     }
 }

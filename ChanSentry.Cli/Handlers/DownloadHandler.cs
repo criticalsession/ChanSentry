@@ -1,4 +1,5 @@
 ﻿using ChanSentry.CLI.Services;
+using ChanSentry.CLI.Services.Interfaces;
 using ChanSentry.Cli.Utils;
 using ChanSentry.Common.Models;
 using Spectre.Console;
@@ -7,13 +8,18 @@ namespace ChanSentry.CLI.Handlers;
 
 public class DownloadHandler
 {
-    private readonly WatchedThreadService _watchedThreadService;
-    private readonly ThreadProcessingService _threadProcessingService;
+    private readonly IWatchedThreadService _watchedThreadService;
+    private readonly IThreadProcessingService _threadProcessingService;
+
+    public DownloadHandler(IWatchedThreadService watchedThreadService, IThreadProcessingService threadProcessingService)
+    {
+        _watchedThreadService = watchedThreadService;
+        _threadProcessingService = threadProcessingService;
+    }
 
     public DownloadHandler()
+        : this(new WatchedThreadService(), new ThreadProcessingService())
     {
-        _watchedThreadService = new WatchedThreadService();
-        _threadProcessingService = new ThreadProcessingService();
     }
 
     public async Task StartAsync()
@@ -47,7 +53,10 @@ public class DownloadHandler
 
     private async Task<bool> ProcessThreadsLoopAsync(List<WatchedThread> watchedThreads)
     {
-        await ProcessAllThreadsAsync(watchedThreads);
+        var shouldContinue = await ProcessAllThreadsAsync(watchedThreads);
+        
+        if (!shouldContinue)
+            return false;
         
         watchedThreads = _watchedThreadService.RemoveFailedThreads(watchedThreads);
         _watchedThreadService.SaveWatchedThreads(watchedThreads);
@@ -55,7 +64,7 @@ public class DownloadHandler
         return !CheckExitKeys() && await CountdownWithExitCheckAsync(10);
     }
 
-    private async Task ProcessAllThreadsAsync(List<WatchedThread> watchedThreads)
+    private async Task<bool> ProcessAllThreadsAsync(List<WatchedThread> watchedThreads)
     {
         var activeThreads = watchedThreads.Where(t => t.ErrorCount < 3).ToList();
 
@@ -63,15 +72,17 @@ public class DownloadHandler
         {
             var thread = activeThreads[i];
             
-            await _threadProcessingService.ProcessThreadAsync(thread);
+            await _threadProcessingService.ProcessThreadAsync(thread, watchedThreads);
             _watchedThreadService.SaveWatchedThreads(watchedThreads);
 
             if (i < activeThreads.Count - 1)
             {
                 if (!await CountdownWithExitCheckAsync(2))
-                    return;
+                    return false;
             }
         }
+        
+        return true;
     }
 
     private static bool HasWatchedThreads(List<WatchedThread>? watchedThreads)
