@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 import { createServer } from 'node:http';
 import { createReadStream, existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DOWNLOAD_ROOT } from './constants.js';
 import { WatchedThreadService } from './watched-thread-service.js';
 import { ThreadFetchService } from './thread-fetch-service.js';
 import { ThreadProcessingService } from './thread-processing-service.js';
-import { MediaDownloadService } from './media-download-service.js';
+import { getDownloadFolderName, MediaDownloadService } from './media-download-service.js';
 import { createWatchedThread } from './models.js';
 import {
   findCatalogMatches,
@@ -31,11 +34,14 @@ export function createWebApp({
   threadFetchService = new ThreadFetchService(),
   watcherController = null,
   publicRoot = publicDir,
+  downloadRoot = DOWNLOAD_ROOT,
+  openPathInFileExplorer = openFolderInFileExplorer,
   logger = console
 } = {}) {
   let controller = watcherController;
   if (!controller) {
     const downloadService = new MediaDownloadService({
+      downloadRoot,
       logger,
       onProgress: progress => {
         controller.emit('download-progress', {
@@ -64,7 +70,13 @@ export function createWebApp({
       const requestUrl = new URL(req.url, 'http://localhost');
 
       if (requestUrl.pathname.startsWith('/api/')) {
-        await handleApi(req, res, requestUrl, { watchedThreadService, threadFetchService, controller });
+        await handleApi(req, res, requestUrl, {
+          watchedThreadService,
+          threadFetchService,
+          controller,
+          downloadRoot,
+          openPathInFileExplorer
+        });
         return;
       }
 
@@ -82,7 +94,7 @@ export function createWebApp({
 }
 
 async function handleApi(req, res, requestUrl, context) {
-  const { watchedThreadService, threadFetchService, controller } = context;
+  const { watchedThreadService, threadFetchService, controller, downloadRoot, openPathInFileExplorer } = context;
   const method = req.method ?? 'GET';
 
   if (method === 'GET' && requestUrl.pathname === '/api/threads') {
@@ -126,6 +138,27 @@ async function handleApi(req, res, requestUrl, context) {
     watchedThreads.push(newThread);
     await watchedThreadService.saveWatchedThreads(watchedThreads);
     sendJson(res, 201, { thread: toThreadViewModel(newThread), stoppedWatcher });
+    return;
+  }
+
+  const openDownloadsMatch = requestUrl.pathname.match(/^\/api\/threads\/([^/]+)\/(\d+)\/open-downloads$/);
+  if (method === 'POST' && openDownloadsMatch) {
+    const board = decodeURIComponent(openDownloadsMatch[1]).toLowerCase();
+    const threadId = Number(openDownloadsMatch[2]);
+    const watchedThreads = await watchedThreadService.readWatchedThreads();
+    const thread = watchedThreads.find(watched => (
+      watched.Board.toLowerCase() === board && watched.ThreadId === threadId
+    ));
+
+    if (!thread) {
+      sendJson(res, 404, { error: 'Thread not found.' });
+      return;
+    }
+
+    const downloadPath = path.resolve(downloadRoot, thread.Board, getDownloadFolderName(thread));
+    await mkdir(downloadPath, { recursive: true });
+    openPathInFileExplorer(downloadPath);
+    sendJson(res, 200, { opened: true });
     return;
   }
 
@@ -286,6 +319,19 @@ function toThreadViewModel(thread) {
 
 function truncateText(value, maxLength) {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 3)}...`;
+}
+
+function openFolderInFileExplorer(folderPath) {
+  const command = process.platform === 'win32'
+    ? 'explorer.exe'
+    : process.platform === 'darwin'
+      ? 'open'
+      : 'xdg-open';
+  const child = spawn(command, [folderPath], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  child.unref();
 }
 
 export function startWebServer({ port = Number(process.env.PORT) || 3131, host = '127.0.0.1' } = {}) {

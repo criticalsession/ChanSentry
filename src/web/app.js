@@ -75,7 +75,9 @@ function renderThreads() {
     }
     row.innerHTML = `
       <td data-label="Board"><span class="badge badge-neutral mono">/${escapeHtml(thread.board)}/</span></td>
-      <td data-label="Thread" class="mono">${thread.threadId}</td>
+      <td data-label="Thread" class="mono">
+        <button class="thread-link mono" type="button" data-open-downloads="${escapeHtml(thread.board)}:${thread.threadId}" title="Open downloaded files">${thread.threadId}</button>
+      </td>
       <td data-label="Subject">
         <div class="thread-subject-cell">
           <div class="thread-subject" title="${escapeHtml(thread.subject)}">${escapeHtml(thread.subject)}</div>
@@ -194,6 +196,11 @@ async function deleteThread(board, threadId) {
   showToast(`Deleted /${board}/${threadId}`);
 }
 
+async function openThreadDownloads(board, threadId) {
+  await api(`/api/threads/${encodeURIComponent(board)}/${threadId}/open-downloads`, { method: 'POST' });
+  showToast(`Opened downloads for /${board}/${threadId}`);
+}
+
 function connectEvents() {
   const source = new EventSource('/api/events');
   source.addEventListener('status', message => {
@@ -310,6 +317,17 @@ elements.searchForm.addEventListener('submit', async event => {
 });
 
 document.addEventListener('click', async event => {
+  const openDownloadsValue = event.target.closest('[data-open-downloads]')?.dataset.openDownloads;
+  if (openDownloadsValue) {
+    const [board, threadId] = openDownloadsValue.split(':');
+    try {
+      await openThreadDownloads(board, Number(threadId));
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
+
   const deleteValue = event.target.closest('[data-delete]')?.dataset.delete;
   if (deleteValue) {
     const [board, threadId] = deleteValue.split(':');

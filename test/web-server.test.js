@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { createWebApp } from '../src/web-server.js';
 import { ThreadFetchResult } from '../src/thread-fetch-service.js';
 import { createThread, createWatchedThread } from '../src/models.js';
@@ -95,6 +98,38 @@ test('web API lists, adds, and deletes watched threads', async () => {
     assert.deepEqual(deleted.body.threads.map(thread => thread.threadId), [11]);
   } finally {
     await close(server);
+  }
+});
+
+test('web API opens a watched thread download folder', async () => {
+  const downloadRoot = await mkdtemp(path.join(os.tmpdir(), 'chansentry-downloads-'));
+  const openedPaths = [];
+  const watchedThreadService = new MemoryWatchedThreadService([
+    { Board: 'g', ThreadId: 10, Subject: 'GPU / prices?' }
+  ]);
+  const { server } = createWebApp({
+    watchedThreadService,
+    threadFetchService: {},
+    watcherController: new WatcherController({ watchedThreadService, intervalMs: 1 }),
+    downloadRoot,
+    openPathInFileExplorer: folderPath => openedPaths.push(folderPath),
+    logger: { log() {}, error() {} }
+  });
+  const baseUrl = await listen(server);
+
+  try {
+    const result = await request(baseUrl, '/api/threads/g/10/open-downloads', { method: 'POST' });
+
+    assert.equal(result.status, 200);
+    assert.deepEqual(openedPaths, [
+      path.resolve(downloadRoot, 'g', '10 - GPU _ prices_')
+    ]);
+
+    const missing = await request(baseUrl, '/api/threads/g/11/open-downloads', { method: 'POST' });
+    assert.equal(missing.status, 404);
+  } finally {
+    await close(server);
+    await rm(downloadRoot, { recursive: true, force: true });
   }
 });
 

@@ -339,6 +339,31 @@ h2 {
   font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
+.thread-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  color: var(--primary);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.thread-link:hover,
+.thread-link:focus-visible {
+  color: var(--primary-dark);
+}
+
+.thread-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
 .empty-state {
   height: 220px;
   color: var(--muted);
