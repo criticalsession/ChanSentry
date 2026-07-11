@@ -5,6 +5,20 @@ import { fileURLToPath } from 'node:url';
 import { DownloadHandler } from './download-handler.js';
 import { ManageThreadsHandler, printTitle } from './manage-threads.js';
 
+export function parseMenuChoice(answer, choicesLength) {
+  const normalized = String(answer).trim();
+  if (!/^\d+$/.test(normalized)) {
+    return null;
+  }
+
+  const selectedIndex = Number.parseInt(normalized, 10) - 1;
+  if (selectedIndex < 0 || selectedIndex >= choicesLength) {
+    return null;
+  }
+
+  return selectedIndex;
+}
+
 async function promptMenu(rl, title, choices) {
   console.clear();
   printTitle();
@@ -12,9 +26,10 @@ async function promptMenu(rl, title, choices) {
   choices.forEach((choice, index) => console.log(`${index + 1}. ${choice.label}`));
 
   while (true) {
-    const answer = Number(await rl.question('\nChoose an option: '));
-    if (Number.isInteger(answer) && answer >= 1 && answer <= choices.length) {
-      return choices[answer - 1].value;
+    const answer = await rl.question('\nChoose an option: ');
+    const selectedIndex = parseMenuChoice(answer, choices.length);
+    if (selectedIndex !== null) {
+      return choices[selectedIndex].value;
     }
     console.log('Invalid selection.');
   }

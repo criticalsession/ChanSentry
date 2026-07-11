@@ -10,6 +10,7 @@ import { ThreadProcessingService } from '../src/thread-processing-service.js';
 import { sanitizeFileName } from '../src/file-name-sanitizer.js';
 import { ThreadFetchResult } from '../src/thread-fetch-service.js';
 import { createPost, createWatchedThread } from '../src/models.js';
+import { parseMenuChoice } from '../src/cli.js';
 
 test('watched thread service creates, reads, saves, and filters threads', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'chansentry-'));
@@ -151,8 +152,8 @@ test('thread processing downloads only new media and updates thread state', asyn
   assert.notEqual(watchedThread.LastChecked, '2024-01-01T00:00:00Z');
 });
 
-test('thread processing removes thread after third fetch error', async () => {
-  const watchedThread = createWatchedThread({ Board: 'g', ThreadId: 12345, ErrorCount: 2 });
+test('thread processing removes thread immediately on 404', async () => {
+  const watchedThread = createWatchedThread({ Board: 'g', ThreadId: 12345, ErrorCount: 0 });
   const watchedThreads = [watchedThread];
   let savedThreads = null;
 
@@ -170,7 +171,39 @@ test('thread processing removes thread after third fetch error', async () => {
 
   await service.processThread(watchedThread, watchedThreads);
 
+  assert.equal(watchedThread.ErrorCount, 0);
+  assert.equal(watchedThreads.length, 0);
+  assert.deepEqual(savedThreads, []);
+});
+
+test('thread processing removes thread after third non-404 fetch error', async () => {
+  const watchedThread = createWatchedThread({ Board: 'g', ThreadId: 12345, ErrorCount: 2 });
+  const watchedThreads = [watchedThread];
+  let savedThreads = null;
+
+  const service = new ThreadProcessingService({
+    logger: { log() {}, error() {} },
+    fetchService: {
+      fetchThread: async () => ThreadFetchResult.failed(500)
+    },
+    watchedThreadService: {
+      saveWatchedThreads: async threads => {
+        savedThreads = [...threads];
+      }
+    }
+  });
+
+  await service.processThread(watchedThread, watchedThreads);
+
   assert.equal(watchedThread.ErrorCount, 3);
   assert.equal(watchedThreads.length, 0);
   assert.deepEqual(savedThreads, []);
+});
+
+test('parse menu choice accepts a valid numeric selection once', () => {
+  assert.equal(parseMenuChoice('3', 3), 2);
+  assert.equal(parseMenuChoice(' 3 ', 3), 2);
+  assert.equal(parseMenuChoice('', 3), null);
+  assert.equal(parseMenuChoice('abc', 3), null);
+  assert.equal(parseMenuChoice('4', 3), null);
 });

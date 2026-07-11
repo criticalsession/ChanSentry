@@ -56,6 +56,16 @@ export class ThreadProcessingService {
   }
 
   async handleFetchError(thread, allWatchedThreads, statusCode) {
+    if (statusCode === 404) {
+      this.logger.error(`Thread ${thread.ThreadId} on /${thread.Board}/ returned 404 and will be deleted from Watched Threads list immediately.`);
+      const index = allWatchedThreads.indexOf(thread);
+      if (index >= 0) {
+        allWatchedThreads.splice(index, 1);
+      }
+      await this.watchedThreadService.saveWatchedThreads(allWatchedThreads);
+      return;
+    }
+
     thread.ErrorCount += 1;
     this.logger.error(`Failed to fetch thread ${thread.ThreadId} on /${thread.Board}/ - Status Code: ${statusCode} (Total Errors: ${thread.ErrorCount}/3)`);
 
