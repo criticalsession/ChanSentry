@@ -1,4 +1,4 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-npm.cmd start
+npm.cmd run web

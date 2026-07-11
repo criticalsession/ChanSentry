@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChanSentry</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">ChanSentry</p>
+          <h1>Watched Threads</h1>
+        </div>
+        <div class="status-strip">
+          <span id="watcherBadge" class="badge badge-neutral">Idle</span>
+          <button id="startWatcher" class="button button-primary" type="button">Start</button>
+          <button id="stopWatcher" class="button" type="button">Stop</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="panel panel-main">
+          <div class="panel-header">
+            <div>
+              <h2>Threads</h2>
+              <p id="threadSummary">Loading...</p>
+            </div>
+            <button id="refreshThreads" class="icon-button" type="button" aria-label="Refresh threads" title="Refresh">
+              <span aria-hidden="true">&orarr;</span>
+            </button>
+          </div>
+
+          <div class="thread-table-wrap">
+            <table class="thread-table">
+              <thead>
+                <tr>
+                  <th>Board</th>
+                  <th>Thread</th>
+                  <th>Subject</th>
+                  <th>Files</th>
+                  <th>Errors</th>
+                  <th>Last checked</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="threadRows">
+                <tr>
+                  <td colspan="7" class="empty-state">Loading watched threads...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="side-stack">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Add Thread</h2>
+                <p>Direct watch</p>
+              </div>
+            </div>
+            <form id="addThreadForm" class="form-grid">
+              <label>
+                <span>Board</span>
+                <input id="addBoard" name="board" placeholder="g" autocomplete="off" required>
+              </label>
+              <label>
+                <span>Thread ID</span>
+                <input id="addThreadId" name="threadId" inputmode="numeric" placeholder="12345678" required>
+              </label>
+              <button class="button button-primary button-wide" type="submit">Add</button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Search</h2>
+                <p>Catalog lookup</p>
+              </div>
+            </div>
+            <form id="searchForm" class="form-grid">
+              <label>
+                <span>Board</span>
+                <input id="searchBoard" name="board" placeholder="g" autocomplete="off" required>
+              </label>
+              <label>
+                <span>Query</span>
+                <input id="searchQuery" name="query" placeholder="thread subject" required>
+              </label>
+              <button class="button button-wide" type="submit">Search</button>
+            </form>
+            <div id="searchResults" class="result-list"></div>
+          </section>
+
+          <section class="panel activity-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Activity</h2>
+                <p id="activitySummary">No recent events</p>
+              </div>
+            </div>
+            <div id="activityLog" class="activity-log"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

@@ -107,6 +107,7 @@ test('media download service creates subject folders, renames old folders, skips
   const thread = createWatchedThread({ Board: 'g', ThreadId: 12345, Subject: 'Subject' });
   const oldPath = path.join(downloadRoot, 'g', '12345');
   const progressWrites = [];
+  const progressEvents = [];
   const logLines = [];
 
   try {
@@ -120,6 +121,7 @@ test('media download service creates subject folders, renames old folders, skips
         isTTY: true,
         write: chunk => progressWrites.push(chunk)
       },
+      onProgress: event => progressEvents.push(event),
       fetchImpl: async () => {
         fetchCalls += 1;
         return {
@@ -150,6 +152,12 @@ test('media download service creates subject folders, renames old folders, skips
       '\rDownloading media [====================] 1/1',
       '\n'
     ]);
+    assert.deepEqual(progressEvents.map(event => `${event.completed}/${event.total}`), ['0/1', '1/1', '0/1', '1/1']);
+    assert.deepEqual(progressEvents[0].thread, {
+      Board: 'g',
+      ThreadId: 12345,
+      Subject: 'Subject'
+    });
     assert.deepEqual(logLines, ['Renamed folder to include subject']);
   } finally {
     await rm(dir, { recursive: true, force: true });

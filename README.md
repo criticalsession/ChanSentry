@@ -8,7 +8,7 @@ ChanSentry is a Node.js CLI for watching 4chan threads and downloading new media
 
 No runtime npm dependencies are required.
 
-## Usage
+## Web Dashboard
 
 From the repository root:
 
@@ -19,13 +19,21 @@ From the repository root:
 or:
 
 ```powershell
-npm.cmd start
+npm.cmd run web
 ```
 
-If your shell permits npm scripts directly, this also works:
+The dashboard starts at:
 
-```bash
-npm start
+```text
+http://127.0.0.1:3131
+```
+
+## CLI
+
+The original terminal CLI remains available:
+
+```powershell
+npm.cmd start
 ```
 
 The app stores watched threads in `watched-threads.json` and downloads media to:

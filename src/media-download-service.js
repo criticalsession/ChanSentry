@@ -12,12 +12,14 @@ export class MediaDownloadService {
     fetchImpl = globalThis.fetch,
     logger = console,
     downloadRoot = DOWNLOAD_ROOT,
-    progressStream = process.stdout
+    progressStream = process.stdout,
+    onProgress = null
   } = {}) {
     this.fetchImpl = fetchImpl;
     this.logger = logger;
     this.downloadRoot = downloadRoot;
     this.progressStream = progressStream;
+    this.onProgress = onProgress;
   }
 
   async downloadMediaFiles(posts, thread) {
@@ -28,11 +30,13 @@ export class MediaDownloadService {
     const downloadPath = await this.prepareDownloadDirectory(thread);
     let completed = 0;
 
+    this.emitDownloadProgress(thread, completed, posts.length);
     this.renderDownloadProgress(completed, posts.length);
 
     for (const post of posts) {
       await this.downloadSingleFile(post, thread.Board, downloadPath);
       completed += 1;
+      this.emitDownloadProgress(thread, completed, posts.length);
       this.renderDownloadProgress(completed, posts.length);
     }
 
@@ -110,6 +114,18 @@ export class MediaDownloadService {
     if (this.progressStream?.isTTY) {
       this.progressStream.write('\n');
     }
+  }
+
+  emitDownloadProgress(thread, completed, total) {
+    this.onProgress?.({
+      completed,
+      total,
+      thread: {
+        Board: thread.Board,
+        ThreadId: thread.ThreadId,
+        Subject: thread.Subject
+      }
+    });
   }
 }
 

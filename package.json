@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node ./src/cli.js",
+    "web": "node ./src/web-server.js",
     "test": "node --test"
   },
   "engines": {
