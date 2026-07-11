@@ -8,18 +8,35 @@ import { sanitizeFileName } from './file-name-sanitizer.js';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 export class MediaDownloadService {
-  constructor({ fetchImpl = globalThis.fetch, logger = console, downloadRoot = DOWNLOAD_ROOT } = {}) {
+  constructor({
+    fetchImpl = globalThis.fetch,
+    logger = console,
+    downloadRoot = DOWNLOAD_ROOT,
+    progressStream = process.stdout
+  } = {}) {
     this.fetchImpl = fetchImpl;
     this.logger = logger;
     this.downloadRoot = downloadRoot;
+    this.progressStream = progressStream;
   }
 
   async downloadMediaFiles(posts, thread) {
+    if (posts.length === 0) {
+      return;
+    }
+
     const downloadPath = await this.prepareDownloadDirectory(thread);
+    let completed = 0;
+
+    this.renderDownloadProgress(completed, posts.length);
 
     for (const post of posts) {
       await this.downloadSingleFile(post, thread.Board, downloadPath);
+      completed += 1;
+      this.renderDownloadProgress(completed, posts.length);
     }
+
+    this.finishDownloadProgress();
   }
 
   async prepareDownloadDirectory(thread) {
@@ -56,7 +73,6 @@ export class MediaDownloadService {
       const filePath = path.join(downloadPath, fileName);
 
       if (existsSync(filePath)) {
-        this.logger.log(`> File ${fileName} already exists`);
         return;
       }
 
@@ -71,10 +87,28 @@ export class MediaDownloadService {
 
       const buffer = Buffer.from(await response.arrayBuffer());
       await writeFile(filePath, buffer);
-      this.logger.log(`> Downloaded ${fileName}`);
       await delay(100);
     } catch (error) {
       this.logger.error(`> Error downloading file: ${error.message}`);
+    }
+  }
+
+  renderDownloadProgress(completed, total) {
+    const line = buildProgressLine(completed, total);
+
+    if (this.progressStream?.isTTY) {
+      this.progressStream.write(`\r${line}`);
+      return;
+    }
+
+    if (completed === 0 || completed === total) {
+      this.logger.log(line);
+    }
+  }
+
+  finishDownloadProgress() {
+    if (this.progressStream?.isTTY) {
+      this.progressStream.write('\n');
     }
   }
 }
@@ -88,4 +122,12 @@ export function buildFileName(post) {
   const sanitizedFileName = sanitizeFileName(post.FileName);
   const prefix = sanitizedFileName ? `${sanitizedFileName} - ` : '';
   return `${prefix}${post.InternalFileIdentifier}${post.FileExtension}`;
+}
+
+export function buildProgressLine(completed, total) {
+  const width = 20;
+  const ratio = total === 0 ? 1 : completed / total;
+  const filled = Math.round(ratio * width);
+  const bar = `${'='.repeat(filled)}${'-'.repeat(width - filled)}`;
+  return `Downloading media [${bar}] ${completed}/${total}`;
 }

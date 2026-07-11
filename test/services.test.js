@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { WatchedThreadService } from '../src/watched-thread-service.js';
 import { ThreadFetchService } from '../src/thread-fetch-service.js';
-import { MediaDownloadService, buildFileName, getDownloadFolderName } from '../src/media-download-service.js';
+import { MediaDownloadService, buildFileName, buildProgressLine, getDownloadFolderName } from '../src/media-download-service.js';
 import { ThreadProcessingService } from '../src/thread-processing-service.js';
 import { sanitizeFileName } from '../src/file-name-sanitizer.js';
 import { ThreadFetchResult } from '../src/thread-fetch-service.js';
@@ -96,13 +96,18 @@ test('download folders and filenames match existing behavior', () => {
 
   assert.equal(buildFileName(createPost({ filename: 'testfile', tim: 1234567890, ext: '.jpg' })), 'testfile - 1234567890.jpg');
   assert.equal(buildFileName(createPost({ filename: null, tim: 1234567890, ext: '.jpg' })), '1234567890.jpg');
+  assert.equal(buildProgressLine(0, 4), 'Downloading media [--------------------] 0/4');
+  assert.equal(buildProgressLine(2, 4), 'Downloading media [==========----------] 2/4');
+  assert.equal(buildProgressLine(4, 4), 'Downloading media [====================] 4/4');
 });
 
-test('media download service creates subject folders, renames old folders, and skips existing files', async () => {
+test('media download service creates subject folders, renames old folders, skips existing files, and reports aggregate progress', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'chansentry-download-'));
   const downloadRoot = path.join(dir, 'downloads');
   const thread = createWatchedThread({ Board: 'g', ThreadId: 12345, Subject: 'Subject' });
   const oldPath = path.join(downloadRoot, 'g', '12345');
+  const progressWrites = [];
+  const logLines = [];
 
   try {
     await mkdir(oldPath, { recursive: true });
@@ -110,7 +115,11 @@ test('media download service creates subject folders, renames old folders, and s
     let fetchCalls = 0;
     const service = new MediaDownloadService({
       downloadRoot,
-      logger: { log() {}, error() {} },
+      logger: { log: line => logLines.push(line), error() {} },
+      progressStream: {
+        isTTY: true,
+        write: chunk => progressWrites.push(chunk)
+      },
       fetchImpl: async () => {
         fetchCalls += 1;
         return {
@@ -133,6 +142,15 @@ test('media download service creates subject folders, renames old folders, and s
       createPost({ filename: 'image', tim: 111, ext: '.jpg' })
     ], thread);
     assert.equal(fetchCalls, 1);
+    assert.deepEqual(progressWrites, [
+      '\rDownloading media [--------------------] 0/1',
+      '\rDownloading media [====================] 1/1',
+      '\n',
+      '\rDownloading media [--------------------] 0/1',
+      '\rDownloading media [====================] 1/1',
+      '\n'
+    ]);
+    assert.deepEqual(logLines, ['Renamed folder to include subject']);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
