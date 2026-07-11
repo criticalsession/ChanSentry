@@ -50,6 +50,64 @@ export class ManageThreadsHandler {
     }
   }
 
+  async searchAndAddThreads() {
+    const rl = this.io ?? createInterface({ input, output });
+    try {
+      console.clear();
+      printTitle();
+      this.logger.log('Search Threads\n');
+
+      const board = (await rl.question('Enter the board code (e.g., g, pol, v): ')).trim().toLowerCase();
+      if (!board) {
+        this.logger.error('Board cannot be empty.');
+        return;
+      }
+
+      const query = (await rl.question('Enter a search query: ')).trim();
+      if (!query) {
+        this.logger.error('Search query cannot be empty.');
+        return;
+      }
+
+      this.logger.log(`\nSearching /${board}/ for "${query}"...`);
+      const catalogResult = await this.threadFetchService.fetchCatalog(board);
+      if (!catalogResult.isSuccess) {
+        if (catalogResult.statusCode === 404) {
+          this.logger.error(`Board /${board}/ was not found.`);
+        } else {
+          this.logger.error(`Failed to fetch catalog for /${board}/. Status: ${catalogResult.statusCode}`);
+        }
+        return;
+      }
+
+      const watchedThreads = await this.watchedThreadService.readWatchedThreads();
+      const matches = findCatalogMatches(catalogResult.catalogPages, query)
+        .filter(thread => !watchedThreads.some(watched => (
+          watched.Board.toLowerCase() === board && watched.ThreadId === thread.ThreadId
+        )));
+
+      if (matches.length === 0) {
+        this.logger.log('No matching unwatched threads found.');
+        return;
+      }
+
+      printCatalogSearchResults(board, matches);
+      const selected = await rl.question('Enter thread numbers to add, comma separated, or blank to cancel: ');
+      const indexes = parseSelectionIndexes(selected, matches.length);
+      if (indexes.length === 0) {
+        return;
+      }
+
+      for (const index of indexes) {
+        await this.fetchAndAddThread(watchedThreads, board, matches[index].ThreadId);
+      }
+    } finally {
+      if (!this.io) {
+        rl.close();
+      }
+    }
+  }
+
   async fetchAndAddThread(watchedThreads, board, threadId) {
     this.logger.log(`\nFetching thread ${threadId} from /${board}/...`);
 
@@ -146,6 +204,44 @@ export function printTitle() {
   console.log('Welcome to ChanSentry!\n');
 }
 
+export function parseSelectionIndexes(selected, maxLength) {
+  return [...new Set(
+    selected
+      .split(',')
+      .map(value => Number(value.trim()) - 1)
+      .filter(index => Number.isInteger(index) && index >= 0 && index < maxLength)
+  )].sort((a, b) => a - b);
+}
+
+export function normalizeSearchText(value) {
+  return decodeHtmlEntities(String(value ?? ''))
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function findCatalogMatches(catalogPages, query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  return catalogPages
+    .flatMap(page => page.ThreadList)
+    .filter(thread => {
+      const haystack = `${normalizeSearchText(thread.Subject)} ${normalizeSearchText(thread.Comment)}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+}
+
+export function printCatalogSearchResults(board, matches) {
+  const rows = matches.map((thread, index) => ({
+    '#': index + 1,
+    ThreadId: thread.ThreadId,
+    Subject: thread.Subject || 'No Subject',
+    Replies: thread.ReplyCount,
+    Images: thread.ImageCount,
+    Preview: truncateText(normalizeSearchText(thread.Comment) || 'No Comment', 80)
+  }));
+  console.table(rows);
+}
+
 export function printThreadsTable(watchedThreads) {
   const rows = watchedThreads.map((thread, index) => ({
     '#': index + 1,
@@ -180,4 +276,22 @@ export function formatLastChecked(value) {
   if (days < 7) return `${Math.floor(days)}d ago`;
 
   return checked.toISOString().slice(0, 10);
+}
+
+function decodeHtmlEntities(value) {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, '\'')
+    .replace(/&#39;/g, '\'');
+}
+
+function truncateText(value, maxLength) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength - 3)}...`;
 }

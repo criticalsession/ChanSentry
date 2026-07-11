@@ -11,6 +11,7 @@ import { sanitizeFileName } from '../src/file-name-sanitizer.js';
 import { ThreadFetchResult } from '../src/thread-fetch-service.js';
 import { createPost, createWatchedThread } from '../src/models.js';
 import { parseMenuChoice } from '../src/cli.js';
+import { findCatalogMatches, normalizeSearchText, parseSelectionIndexes } from '../src/manage-threads.js';
 
 test('watched thread service creates, reads, saves, and filters threads', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'chansentry-'));
@@ -60,6 +61,27 @@ test('thread fetch service returns success, not modified, and failures', async (
 
   const failed = await new ThreadFetchService(async () => ({ ok: false, status: 404 })).fetchThread(watchedThread);
   assert.equal(failed.statusCode, 404);
+});
+
+test('thread fetch service returns catalog pages', async () => {
+  const service = new ThreadFetchService(async (url, options) => {
+    assert.equal(url, 'https://a.4cdn.org/g/catalog.json');
+    assert.equal(options.headers['User-Agent'], 'ChanSentry/1.0');
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ([
+        { page: 1, threads: [{ no: 100, sub: 'GPU thread', com: 'New cards' }] },
+        { page: 2, threads: [{ no: 200, sub: 'CPU thread', com: 'Benchmarks' }] }
+      ])
+    };
+  });
+
+  const result = await service.fetchCatalog('g');
+  assert.equal(result.isSuccess, true);
+  assert.equal(result.catalogPages.length, 2);
+  assert.equal(result.catalogPages[0].ThreadList[0].ThreadId, 100);
+  assert.equal(result.catalogPages[1].ThreadList[0].Subject, 'CPU thread');
 });
 
 test('download folders and filenames match existing behavior', () => {
@@ -206,4 +228,24 @@ test('parse menu choice accepts a valid numeric selection once', () => {
   assert.equal(parseMenuChoice('', 3), null);
   assert.equal(parseMenuChoice('abc', 3), null);
   assert.equal(parseMenuChoice('4', 3), null);
+});
+
+test('catalog search matches subject and comment text', () => {
+  const matches = findCatalogMatches([
+    {
+      ThreadList: [
+        { ThreadId: 10, Subject: 'GPU prices', Comment: 'Cards are getting cheaper', ReplyCount: 1, ImageCount: 0 },
+        { ThreadId: 11, Subject: '', Comment: 'Looking for <b>linux</b> laptop advice', ReplyCount: 1, ImageCount: 0 }
+      ]
+    }
+  ], 'linux');
+
+  assert.deepEqual(matches.map(thread => thread.ThreadId), [11]);
+  assert.equal(normalizeSearchText('A &amp; B <br> test'), 'A & B test');
+});
+
+test('selection indexes parse comma separated unique choices', () => {
+  assert.deepEqual(parseSelectionIndexes('1, 3, 3, 2', 4), [0, 1, 2]);
+  assert.deepEqual(parseSelectionIndexes('', 4), []);
+  assert.deepEqual(parseSelectionIndexes('0, 5, x', 4), []);
 });

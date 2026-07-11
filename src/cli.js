@@ -35,8 +35,19 @@ async function promptMenu(rl, title, choices) {
   }
 }
 
+function createCliInterface() {
+  return createInterface({ input, output });
+}
+
+function resetTerminalInput() {
+  if (input.isTTY) {
+    input.setRawMode(false);
+  }
+  input.pause();
+}
+
 export async function main() {
-  const rl = createInterface({ input, output });
+  let rl = createCliInterface();
 
   try {
     let currentMenu = 'main';
@@ -58,6 +69,7 @@ export async function main() {
       } else if (currentMenu === 'manage') {
         const selected = await promptMenu(rl, 'What would you like to do?', [
           { label: 'Add Watched Thread', value: 'add' },
+          { label: 'Search Threads', value: 'search' },
           { label: 'List/Delete Watched Threads', value: 'list' },
           { label: 'Back', value: 'back' }
         ]);
@@ -65,6 +77,9 @@ export async function main() {
         const handler = new ManageThreadsHandler({ io: rl });
         if (selected === 'add') {
           await handler.addThread();
+          await rl.question('\nPress enter to continue...');
+        } else if (selected === 'search') {
+          await handler.searchAndAddThreads();
           await rl.question('\nPress enter to continue...');
         } else if (selected === 'list') {
           await handler.listAndDeleteThreads();
@@ -76,20 +91,25 @@ export async function main() {
 
         currentMenu = 'manage';
       } else if (currentMenu === 'download') {
-        rl.pause();
+        rl.close();
         await new DownloadHandler().start();
-        rl.resume();
+        rl = createCliInterface();
         currentMenu = 'main';
       }
     }
   } finally {
     rl.close();
+    resetTerminalInput();
   }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main().catch(error => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+  main()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error(error);
+      process.exit(1);
+    });
 }

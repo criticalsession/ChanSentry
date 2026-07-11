@@ -1,5 +1,5 @@
 import { URLS, USER_AGENT } from './constants.js';
-import { createThread } from './models.js';
+import { createCatalogThreads, createThread } from './models.js';
 
 export class ThreadFetchResult {
   constructor({ isSuccess = false, isNotModified = false, threadData = null, statusCode = null } = {}) {
@@ -25,6 +25,29 @@ export class ThreadFetchResult {
 export class ThreadFetchService {
   constructor(fetchImpl = globalThis.fetch) {
     this.fetchImpl = fetchImpl;
+  }
+
+  async fetchCatalog(board) {
+    const response = await this.fetchImpl(URLS.catalogUrl(board), {
+      headers: {
+        'User-Agent': USER_AGENT
+      }
+    });
+
+    if (response.ok) {
+      const catalogPages = await response.json();
+      return {
+        isSuccess: true,
+        statusCode: response.status,
+        catalogPages: catalogPages.map(createCatalogThreads)
+      };
+    }
+
+    return {
+      isSuccess: false,
+      statusCode: response.status,
+      catalogPages: []
+    };
   }
 
   async fetchThread(thread) {
