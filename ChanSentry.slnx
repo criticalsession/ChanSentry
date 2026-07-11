@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="ChanSentry.Common/ChanSentry.Common.csproj" />
-  <Project Path="ChanSentry.Cli/ChanSentry.CLI.csproj" />
-  <Project Path="ChanSentry.Tests/ChanSentry.Tests.csproj" />
-</Solution>
